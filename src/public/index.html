@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chemical SI Helper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+</head>
+
+<body>
+    <div class="pure-form pure-form-stacked my-form">
+        <h1><sup>1</sup>H NMR peak formatter</h1>
+        <input type="radio" name="info" value="yes" class="radio-ion">
+        <span class="radio-text">With info</span>
+        <input type="radio" name="info" value="no" class="radio-ion" checked>
+        <span class="radio-text">Without info</span>
+        <textarea id="h1peaks" rows="4" cols="55" height="100" placeholder="H1 peaks here..." class="input-formula"></textarea>
+        <div id="h1output"></div>
+        <h1><sup>13</sup>C NMR peak handler</h1>
+        <input type="radio" name="solvent" value="dmso" class="radio-ion" checked>
+        <span class="radio-text">DMSO-<em>d</em><sub>6</sub></span>
+        <input type="radio" name="solvent" value="cdcl3" class="radio-ion">
+        <span class="radio-text">CDCl<sub>3</sub></span>
+        <textarea id="c13peaks" rows="4" cols="55" height="100" placeholder="C13 peaks here..." class="input-formula"></textarea>
+        <div class="output-text" id="newPeaks"></div>
+        <h1>Exact Mass Calculator</h1>
+        <fieldset class="radio-ion-field">
+            <input type="radio" name="ion" value="None" class="radio-ion" checked>
+            <span class="radio-text">None</span>
+            <input type="radio" name="ion" value="H" class="radio-ion" checked>
+            <span class="radio-text">H+</span>
+            <input type="radio" name="ion" value="Na" class="radio-ion">
+            <span class="radio-text">Na+</span>
+            <input type="radio" name="ion" value="K" class="radio-ion">
+            <span class="radio-text">K+</span>
+        </fieldset>
+        <div class="input-formula-container">
+            <input id="formula" name="mass" type="text" placeholder="formula here..." class="input-formula">
+            <input id="mmol" name="mass" type="number" placeholder="mmol here..." class="input-mmol" min="0.0" step="0.01">
+            <input id="yield" name="mass" type="number" placeholder="yield here..." class="input-yield" min="0">
+        </div>
+        <div id="massError"></div>
+        <div id="weight"></div>
+        <div id="newFormula"></div>
+    </div>
+</body>
+
+</html>
