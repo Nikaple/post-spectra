@@ -3,8 +3,10 @@
         "module": "commonjs",
         "target": "es5",
         "importHelpers": true,
+        "noImplicitReturns": true,
         "noImplicitAny": false,
-        "noEmitHelpers": true,
+        "noImplicitThis": true,
+        "strictNullChecks": true,
         "moduleResolution": "node",
         "typeRoots": [
             "node_modules/@types"

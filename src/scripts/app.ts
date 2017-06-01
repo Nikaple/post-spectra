@@ -8,4 +8,3 @@ massComponent.init();
 
 const h1Component = new H1Component();
 h1Component.init();
-console.log(2);

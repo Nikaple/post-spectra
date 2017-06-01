@@ -1,4 +1,4 @@
-import { has, is } from 'lodash';
+import { has, is, reduce } from 'lodash';
 import { Formula } from './formula';
 import elementLookup from './utils/elementLookup';
 import { getActiveRadioButton,
@@ -10,7 +10,9 @@ export class MassComponent {
   // exact mass of input molecule
   private exactMass: number;
   // chemical formula of input molecule
-  private formulaName: string;
+  private inputFormula: string;
+  // chemical formula for output
+  private outputFormula: string;
   // product yield of input molecule
   private productYield: number;
   // mmol of input molecule
@@ -23,7 +25,8 @@ export class MassComponent {
    */
   constructor() {
     this.exactMass = 0;
-    this.formulaName = '';
+    this.inputFormula = '';
+    this.outputFormula = '';
     this.productYield = 0;
     this.mmol = 0;
   }
@@ -34,9 +37,9 @@ export class MassComponent {
    * @memberof MassComponent
    */
   public init(): void {
-    const mass$ = Array.from(document.querySelectorAll('input[name="mass"]'));
-    const ion$ = Array.from(document.querySelectorAll('input[name="ion"]'));
-    [...mass$, ...ion$].forEach((elem) => {
+    const $mass = Array.from(document.querySelectorAll('input[name="mass"]'));
+    const $ion = Array.from(document.querySelectorAll('input[name="ion"]'));
+    [...$mass, ...$ion].forEach((elem) => {
       elem.addEventListener('input', this.handle.bind(this));
       elem.addEventListener('change', this.handle.bind(this));
     });
@@ -49,43 +52,42 @@ export class MassComponent {
    */
   private handle(): void {
     // get DOM elements
-    const formula$ = document.getElementById('formula') as HTMLInputElement;
-    const radios$ = document.querySelectorAll(
+    const $formula = document.getElementById('formula') as HTMLInputElement;
+    const $radios = document.querySelectorAll(
         'input[name="ion"]') as NodeListOf<HTMLInputElement>;
-    const yield$ = document.getElementById('yield') as HTMLInputElement;
-    const mmol$ = document.getElementById('mmol') as HTMLInputElement;
+    const $yield = document.getElementById('yield') as HTMLInputElement;
+    const $mmol = document.getElementById('mmol') as HTMLInputElement;
 
     // initialize
     this.exactMass = 0;
-    this.formulaName = formula$.value;
-    this.productYield = Number(yield$.value);
-    this.mmol = Number(mmol$.value);
+    this.inputFormula = $formula.value;
+    this.productYield = Number($yield.value);
+    this.mmol = Number($mmol.value);
 
     // calculation
-    const formula = new Formula(this.formulaName);
+    const formula = new Formula(this.inputFormula);
     const formulaLiteral = formula.parse();
-    const activeIon = getActiveRadioButton(radios$).value;
+    const activeIon = getActiveRadioButton($radios).value;
     const actualIonInSpectrum = this.getActualIonInSpectrum(formula, activeIon);
-    const newFormulaName = parseLiteralToChemicalFormula(actualIonInSpectrum);
+    this.outputFormula = parseLiteralToChemicalFormula(actualIonInSpectrum);
     const massStr = this.exactMass.toFixed(4);
 
     // render output
-    this.render(newFormulaName);
+    this.render();
   }
 
   /**
    * render calculated formula, yield to screen
    * 
    * @private
-   * @param {any} formulaName 
    * 
    * @memberof MassComponent
    */
-  private render(formulaName): void {
+  private render(): void {
     if (isNaN(this.exactMass) || !this.exactMass) {
       this.renderError();
     } else {
-      this.renderFormula(formulaName);
+      this.renderFormula(this.outputFormula);
       this.renderYield(this.productYield, this.mmol);
     }
   }
@@ -127,10 +129,10 @@ export class MassComponent {
    */
   private getExactMassOfMolecule(formula: Formula): number {
     const formulaLiteral = formula.parse();
-    let mass = 0;
-    for (const elem in formulaLiteral) {
-      mass += elementLookup[elem] * formulaLiteral[elem];
-    }
+    const mass = reduce(formulaLiteral, (total, elemNum, elem) => {
+      total += elementLookup[elem] * elemNum;
+      return total;
+    }, 0);
     return mass;
   }
 
@@ -142,8 +144,8 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderError(): void {
-    const error$ = document.getElementById('massError') as HTMLDivElement;
-    error$.innerHTML = 'Invalid formula !';
+    const $error = document.getElementById('massError') as HTMLDivElement;
+    $error.innerHTML = 'Invalid formula !';
     clearDOMElement('#newFormula');
     clearDOMElement('#weight');
   }
@@ -157,9 +159,9 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderFormula(formula: string): void {
-    const newFormula$ = document.getElementById('newFormula') as HTMLDivElement;
+    const $newFormula = document.getElementById('newFormula') as HTMLDivElement;
     // tslint:disable-next-line:max-line-length
-    newFormula$.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for ${formula}: ${this.exactMass.toFixed(4)} found: YOURDATA`;
+    $newFormula.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for ${formula}: ${this.exactMass.toFixed(4)} found: YOURDATA`;
     clearDOMElement('#massError');
     
   }
@@ -174,9 +176,9 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderYield(productYield: number, mmol: number): void {
-    const weight$ = document.getElementById('weight') as HTMLDivElement;
+    const $weight = document.getElementById('weight') as HTMLDivElement;
     const weight = (this.exactMass * productYield / 100 * mmol).toFixed(0);
-    weight$.innerHTML = `Yield: ${productYield}% (${weight} mg);`;
+    $weight.innerHTML = `Yield: ${productYield}% (${weight} mg);`;
     clearDOMElement('#massError');
   }
 }

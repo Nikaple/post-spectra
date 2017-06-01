@@ -19,8 +19,9 @@ export class Formula {
    * @example
    * // returns {C: 13, H: 22, O: 11, Br: 1, Cl: 2}
    * new Formula('C13H22O11BrCl2').parse();
+   * // not applicable
+   * new Formula('(NH4)2CO3').parse();
    * @returns {object} 
-   * 
    * @memberof Formula
    */
   public parse(): object {
@@ -77,11 +78,9 @@ export class Formula {
    */
   private convertElementSetToElementsObj(obj: object, element: string): object {
     const [elementName, elementNum] = this.splitElementAndNumber(element);
-    if (has(obj, elementName)) {
-      obj[elementName] += elementNum;
-    } else {
-      obj[elementName] = elementNum;
-    }
+    obj[elementName] = has(obj, elementName)
+      ? obj[elementName] + elementNum
+      : elementNum;
     return obj;
   }
 
@@ -103,6 +102,6 @@ export class Formula {
     const getName = /[A-Za-z]+/;
     const elementNum = element.match(getNum) || 1;
     const elementName = element.match(getName)[0];
-    return [elementName, +elementNum];
+    return [elementName, Number(elementNum)];
   }
 }
