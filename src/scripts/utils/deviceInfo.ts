@@ -6,7 +6,7 @@ export const solvents = {
   c6d6: 'C<sub>6</sub>D<sub>6</sub>',
   ch3cn: 'CH<sub>3</sub>CN',
   d2o: 'D<sub>2</sub>O',
-}
+};
 
 export const MAXFREQ = 1000;
 export const MINFREQ = 100;
