@@ -40,5 +40,11 @@ h1 {
 }
 
 .output-text {
+    display: inline-block;
     width: 480px;
+    text-align: left;
+}
+
+.warning-text {
+    background-color: #FF8888;
 }
