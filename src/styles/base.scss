@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @import './pure';
 html,
 body {
@@ -40,4 +41,49 @@ h1 {
 
 .output-text {
     width: 480px;
+=======
+@import './pure';
+html,
+body {
+    /*background-color: black;*/
+    font-family: "Microsoft Yahei", "Arial", sans-serif;
+    padding-top: 1%;
+    text-align: center;
+}
+
+h1 {
+    margin-bottom: 5px;
+}
+
+.my-form {
+    width: 480px;
+    margin: 0 auto;
+}
+
+.radio-ion-field {
+    display: block;
+    margin: 0 auto;
+}
+
+.radio-text {
+    font-size: 15px;
+}
+
+.radio-ion {
+    display: inline-block;
+    /*margin: 0 20px;*/
+}
+
+.input-formula-container {
+    display: inline-block;
+    margin: 0 auto;
+}
+
+.input-formula {
+    display: inline-block;
+}
+
+.output-text {
+    width: 480px;
+>>>>>>> b85c00bc526045457e738cf73b7fced3bb770c94
 }
