@@ -132,7 +132,7 @@ export class MassComponent {
     const mass = reduce(formulaLiteral, (total, elemNum, elem) => {
       total += elementLookup[elem] * elemNum;
       return total;
-    }, 0);
+    },                  0);
     return mass;
   }
 

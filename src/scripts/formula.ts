@@ -101,7 +101,7 @@ export class Formula {
     const getNum = /\d+/;
     const getName = /[A-Za-z]+/;
     const elementNum = element.match(getNum) || 1;
-    const elementName = element.match(getName)[0];
-    return [elementName, Number(elementNum)];
+    const elementName = element.match(getName) || [];
+    return [elementName[0], Number(elementNum)];
   }
 }

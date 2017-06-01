@@ -1,15 +1,25 @@
 import { strToPeaksArray, getActiveRadioButton } from './utils/utils';
 import { split, map, fill, forEach, head, tail } from 'lodash';
 
+type Nucleo = 'H'|'C'|'F'|'P';
+type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
+
 interface CouplingConstant {
   value: number;
   index: number;
 }
 
+interface Metadata {
+  type: 'H' | 'C';
+  freq: number;
+  solvent: string;
+}
+
 interface H1Data {
-  input: string,
-  peaks: string[],
-  couplingConstants: CouplingConstant[]
+  peak: string|string[];
+  peakType: Multiplet;
+  couplingConstants: number|null;
+  hydrogenCount: number;
 }
 
 export class H1Component {
@@ -34,9 +44,9 @@ export class H1Component {
     this.setDataFromInput();
     const h1Reg = /(1H NMR.+\)\.)/g;
     // individual compound 1H NMR data strings, handle multiple data from input
-    let data = this.data.match(h1Reg);
+    const data = this.data.match(h1Reg);
     if (data === null) {
-      this.renderError();
+      this.renderError('Data not valid! Please copy data directly from  MestReNova');
       return;
     }
     // splitting h1data array into describer and data
@@ -45,54 +55,117 @@ export class H1Component {
     });
     // individual data describer, e.g. 1H NMR (600 MHz, dmso)
     const describer: string[] = map(dataArr, head);
-    // individual NMR frequencies
-    const freqs: number[] = this.getFreqs(describer);
-    // individual peak data
-    const peakdata: string[][] = map(dataArr, tail);
-    // arrays for coupling constants
-    const couplingConstants: (CouplingConstant[] | null)[] = forEach(peakdata, //TODO
-    );
-    const H1Datas: H1Data[] = fill(Array(data.length), {});
-    H1Datas.forEach((datum, ind) => {
-      datum.input = data[ind] || '';
-      datum.peaks = peakdata[ind].map(peak => Number(peak).toFixed(1));
-      datum.couplingConstants = couplingConstants[ind];
+    // individual meta data, e.g. 
+    const meta = this.getMetadata(describer);
+    // individual peak data, e.g.
+    // [[
+    //   '7.21 (d, J = 9.7 Hz, 2H)',
+    //   '7.15 (t, J = 11.2 Hz, 1H)', 
+    //   '7.65 (dd, J = 12.1, 1.2 Hz, 2H)', 
+    //   '7.10 - 6.68 (m, 1H)', 
+    //   '4.46 (s, 2H)', 
+    //   '2.30 (s, 3H).'
+    // ]];
+    const peakData: string[][] = map(dataArr, tail);
+    // individual peak data objects,
+    const peakDataObj: H1Data[][] = map(peakData, (peakDatum) => {
+      return map(peakDatum, this.getPeakDataObj);
     });
+    if (!peakDataObj) {
+      return ;
+    }
+    const fixedPeakDataObj: H1Data[][] = map(peakDataObj, (peakDatum, index) => {
+      const freq = meta[index].freq;
+      return map(peakDatum, peak => this.fixPeakData(peak, freq), this);
+    }, this);
+    console.log(fixedPeakDataObj);
+    // const H1Datas: H1Data[] = fill(Array(data.length), {});
+    // H1Datas.forEach((datum, ind) => {
+    //   datum.input = data[ind] || '';
+    //   datum.peaks = peakData[ind].map(peak => Number(peak).toFixed(1));
+    //   datum.couplingConstants = couplingConstants[ind];
+    // });
     
-    console.log(couplingConstants);
   }
   
   // not found => null
-  private getCouplingConstant(data: string[]) {
-    return data.map((datum) => {
-      const reg = /J = (\d+\.\d+)/g;
-      const couplingConstants: CouplingConstant[] = [];
-      let currentMatch: RegExpExecArray | null;
-      while (currentMatch = reg.exec(datum)) {
-        couplingConstants.push({
-          value: parseFloat(currentMatch[1]),
-          index: currentMatch.index
-        });
+  private getPeakDataObj(data: string): H1Data|void {
+    const regexWithCoupling = /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
+    const regexWithoutCoupling = /(\d+\.\d{2}( - \d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    const couplingMatch = regexWithCoupling.exec(data);
+    const nonCouplingMatch = regexWithoutCoupling.exec(data);
+    if (couplingMatch) {
+      return {
+        peak: couplingMatch[1],
+        peakType: couplingMatch[2] as Multiplet,
+        couplingConstants: +couplingMatch[3],
+        hydrogenCount: +couplingMatch[4],
+      };
+    } else if (nonCouplingMatch) {
+      return {
+        peak: nonCouplingMatch[1].split(' - '),
+        peakType: nonCouplingMatch[3] as Multiplet,
+        couplingConstants: null,
+        hydrogenCount: +nonCouplingMatch[4],
+      };
+    } else {
+      // this.renderError('Peak data not valid! Please copy data directly from  MestReNova');
+      return;
+    }
+  }
+
+  private fixPeakData(peakDatum: H1Data, freq: number) {
+    // m & not range => error
+    if (peakDatum.peakType === 'm') {
+      if (peakDatum.peak.length === 1) {
+        peakDatum.peak = '';
+        //TODO
       }
-      return couplingConstants;
-    });
+    } else if (peakDatum.peakType !== 's' &&
+      peakDatum.peakType !== 'd' &&
+      peakDatum.peakType !== 't') {
+        if (this.isCouplingConstantValid(<number>peakDatum.couplingConstants, freq)) {
+          peakDatum.couplingConstants = this.roundCouplingConstant(<number>peakDatum.couplingConstants, freq);
+        }
+    } else {
+      peakDatum.peakType = 'm';
+      //TODO
+    }
+    
+  }
+
+  private roundCouplingConstant(couplingConstant: number, freq: number) {
+    const MAGNIFICATION = 1000;
+    return Math.round(MAGNIFICATION * couplingConstant / freq) * freq / MAGNIFICATION;
+  }
+
+  private isCouplingConstantValid(couplingConstant: number, freq: number) {
+    const MAGNIFICATION = 1000;
+    return MAGNIFICATION * couplingConstant % freq === 0;
   }
 
   private setDataFromInput(): void {
     this.data = (<HTMLInputElement>document.getElementById('h1peaks')).value;
   }
 
-  private getFreqs(data: string[]): number[] {
+  private getMetadata(data: string[]) {
     return data.map((datum) => {
-      console.log(datum);
-      // set default frequency to 600 MHz
-      const freq = datum.match(/\d+ MHz/) || ['600'];
-      return parseInt(freq[0], 10);
+      const nucleo = /\d+(\w)(?: NMR)/.exec(datum) || [];
+      const freq = /(\d+) MHz/.exec(datum) || [];
+      const solvent = /, (\w+)\)/.exec(datum) || [];
+      if (!nucleo || !freq || !solvent) {
+        this.renderError('Device data not valid! Please copy data directly from  MestReNova');
+      }
+      return {
+        type: nucleo[1] as Nucleo,
+        freq: +freq[1],
+        solvent: solvent[1],
+      };
     });
   }
 
-  private renderError(): void {
+  private renderError(msg): void {
     const $error = document.getElementById('massError') as HTMLDivElement;
-    $error.innerHTML = 'Invalid formula !';
+    $error.innerHTML = msg;
   }
 }
