@@ -1,12 +1,12 @@
 # Chemical Supporting Information Helper
 
-## Word设置
+## 基本使用
 
-### 设置默认粘贴方式
+### Word设置
+
+#### 设置默认粘贴方式
 
 在Word中选择文件→选项→高级，从其他程序粘贴设置为“合并格式”，即可以默认合并格式粘贴到Word中，省去手动更改格式的步骤。
-
-## 基本使用
 
 ### <sup>1</sup>H NMR 数据处理
 
