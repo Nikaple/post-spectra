@@ -84,6 +84,7 @@ export class H1Component {
    */
   private handle(): void {
     this.setDataFromInput();
+    this.hightlightData = false;
     const data = this.getDataArray();
     if (data === null) {
       this.renderError('Data not valid! Please copy data directly from MestReNova');
@@ -159,8 +160,9 @@ export class H1Component {
     let output = this.inputData;
     forEach(data, (peakStr, index) => {
       output = this.hightlightData
-        ? replace(output, data[index], formattedPeakStrings[index])
-        : replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
+        ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
+        : replace(output, data[index], formattedPeakStrings[index])
+      console.log(this.hightlightData, output, data[index]);
     });
     return output;
   }
@@ -233,7 +235,7 @@ export class H1Component {
   private parseIndividualData(data: string): H1Data|void {
     const regexWithCoupling = 
     /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
-    const regexWithoutCoupling = /(\d+\.\d{2}( +[–−-] +\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    const regexWithoutCoupling = /(\d+\.\d{2}( *[–−-] *\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {
@@ -244,7 +246,7 @@ export class H1Component {
         hydrogenCount: +couplingMatch[4],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(/ +[–−-] +/g);
+      const peakArr = nonCouplingMatch[1].split(/ *[–−-] */g);
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
       return {
         peak,
@@ -253,7 +255,8 @@ export class H1Component {
         hydrogenCount: +nonCouplingMatch[4],
       };
     } else {
-      this.renderError(`Peak data not valid! Please copy data directly from MestReNova! value: <span class="danger-text">${data}</span>`);
+      const errText = this.inputData.replace(data, `<span class="danger-text">${data}</span>`);
+      this.renderError(`Peak data not valid! Please copy data directly from MestReNova! <br> value: ${errText}`);
       return;
     }
   }

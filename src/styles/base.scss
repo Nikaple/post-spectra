@@ -1,12 +1,15 @@
-@import './pure';
+@import '../../node_modules/purecss/build/forms-nr-min';
 html,
-body {
+body{
     /*background-color: black;*/
     font-family: "Microsoft Yahei", "Arial", sans-serif;
     padding-top: 1%;
     text-align: center;
 }
-
+textarea,input{
+    font-family: "Microsoft Yahei", "Arial", sans-serif;
+    font-size: 16px;
+}
 h1 {
     margin-bottom: 5px;
 }
@@ -24,7 +27,7 @@ h1 {
 }
 
 .my-form {
-    width: 480px;
+    width: 600px;
     max-width: 600px;
     margin: 0 auto;
     .radio-ion-field {
@@ -37,16 +40,20 @@ h1 {
     .radio-ion {
         display: inline-block;
     }
+    .input-textarea {
+        width: 600px;
+    }
+
     .input-formula-container {
         display: inline-block;
         margin: 0 auto;
     }
-    .input-formula {
+    .input-mass {
+        width: 400px;
         display: inline-block;
     }
     .output-text {
         display: inline-block;
-        width: 480px;
         text-align: left;
     }
     .warning-text {
