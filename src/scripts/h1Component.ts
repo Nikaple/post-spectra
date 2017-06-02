@@ -2,7 +2,7 @@ import { strToPeaksArray,
   getActiveRadioButton,
   clearDOMElement,
   copyFormattedToClipboard } from './utils/utils';
-import { some, split, map, fill, forEach, head, tail, clone, reduce, every, indexOf } from 'lodash';
+import { some, split, map, fill, forEach, head, tail, clone, reduce, every, indexOf, replace } from 'lodash';
 import { solvents, minFreq, maxFreq } from './utils/constants';
 
 enum HighlightType {
@@ -60,9 +60,7 @@ export class H1Component {
 
   private handle(): void {
     this.setDataFromInput();
-    const h1Reg = /(1H NMR.+\)\.)/g;
-    // individual compound 1H NMR data strings, handle multiple data from input
-    const data = this.inputData.match(h1Reg);
+    const data = this.getIndividualData();
     if (data === null) {
       this.renderError('Data not valid! Please copy data directly from MestReNova');
       return;
@@ -119,19 +117,25 @@ export class H1Component {
   }
 
   private renderStrArray(renderObjs: RenderObj[]) {
-    const strArr = map(renderObjs, (obj: RenderObj) => {
+    const formattedPeakStrings = map(renderObjs, (obj: RenderObj) => {
       const peakStr = map(obj.peak, this.renderIndividualH1Data.bind(this));
       return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, ${solvents[obj.meta.solvent]}) δ `
-       + peakStr.join(', ');
+       + peakStr.join(', ') + '.';
     });
-    return strArr.join('.<br>') + '.';
+    const data = this.getIndividualData() || [];
+    let output = this.inputData;
+    forEach(data, (peakStr, index) => {
+      output = replace(output, data[index], formattedPeakStrings[index]);
+    });
+    return output;
   }
 
   private renderIndividualH1Data(peakObj: H1Data): string {
     if (peakObj.couplingConstants === null) {
+      console.log(peakObj);
       if (peakObj.peak.length === 2) {
         // for data similar to '7.10 - 6.68 (m, 1H)'
-        return `${peakObj.peak[0]} - ${peakObj.peak[1]} \
+        return `${peakObj.peak[0]} − ${peakObj.peak[1]} \
         (${peakObj.peakType}, ${peakObj.hydrogenCount}H)`;
       } else if (peakObj.danger === true) {
         // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)'
@@ -179,7 +183,7 @@ export class H1Component {
   private getPeakDataObj(data: string): H1Data|void {
     const regexWithCoupling = 
     /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
-    const regexWithoutCoupling = /(\d+\.\d{2}( – \d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    const regexWithoutCoupling = /(\d+\.\d{2}( ?[–−-] ?\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {
@@ -190,7 +194,7 @@ export class H1Component {
         hydrogenCount: +couplingMatch[4],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(' – ');
+      const peakArr = nonCouplingMatch[1].split(/ ?[–−-] ?/g);
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
       return {
         peak,
@@ -204,6 +208,12 @@ export class H1Component {
     }
   }
 
+  private getIndividualData(): RegExpMatchArray|null {
+    // 1H NMR data ends with '.' or ';'
+    const h1Reg = /(1H NMR.+\)[\.;])/g;
+    // individual compound 1H NMR data strings, handle multiple data from input
+    return this.inputData.match(h1Reg);
+  }
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
     const peakDatumCopy = clone(peakDatum);
     // m & not range => error
@@ -255,14 +265,14 @@ export class H1Component {
     return data.map((datum) => {
       const nucleo = /\d+(\w)(?: NMR)/.exec(datum) || [];
       const freq = /(\d+) MHz/.exec(datum) || [];
-      const solvent = /, (\w+)\)/.exec(datum) || [];
+      const solvent = /, (\w+)(:?-d6)?\)/i.exec(datum) || [];
       if (!nucleo || !freq || !solvent) {
         this.renderError('Device data not valid! Please copy data directly from MestReNova');
       }
       return {
         type: nucleo[1] as Nucleo,
         freq: +freq[1],
-        solvent: solvent[1],
+        solvent: solvent[1].toLowerCase(),
       };
     });
   }
@@ -275,18 +285,25 @@ export class H1Component {
     }
     return str;
   }
-  
+
   private renderOutput(str): void {
-    clearDOMElement('#h1Error');
-    const $output = document.getElementById('h1output') as HTMLDivElement;
-    $output.innerHTML = str;
+    this.clearH1DOMElements();
+    if (this.inputData !== '') {
+      const $output = document.getElementById('h1output') as HTMLDivElement;
+      $output.innerHTML = str;
+    }
   }
 
   private renderError(msg): void {
-    clearDOMElement('#h1output');
+    this.clearH1DOMElements();
     if (this.inputData !== '') {
       const $error = document.getElementById('h1Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }
+  }
+
+  private clearH1DOMElements(): void {
+    clearDOMElement('#h1Error');
+    clearDOMElement('#h1output');
   }
 }
