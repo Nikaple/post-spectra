@@ -1,15 +1,23 @@
 @import '../../node_modules/purecss/build/forms-nr-min';
 html,
-body{
+body {
     /*background-color: black;*/
     font-family: "Microsoft Yahei", "Arial", sans-serif;
     padding-top: 1%;
     text-align: center;
 }
-textarea,input{
+
+textarea,
+input {
     font-family: "Microsoft Yahei", "Arial", sans-serif;
     font-size: 16px;
 }
+
+textarea {
+    width: 600px;
+    max-width: 600px;
+}
+
 h1 {
     margin-bottom: 5px;
 }
@@ -43,7 +51,6 @@ h1 {
     .input-textarea {
         width: 600px;
     }
-
     .input-formula-container {
         display: inline-block;
         margin: 0 auto;
@@ -63,4 +70,3 @@ h1 {
         background-color: #FF8888;
     }
 }
-

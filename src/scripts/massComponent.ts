@@ -19,6 +19,8 @@ export class MassComponent {
   private productYield: number;
   // mmol of input molecule
   private mmol: number;
+  // the unique instance of singleton
+  private static instance: MassComponent;
 
   /**
    * Creates an instance of MassComponent.
@@ -75,7 +77,6 @@ export class MassComponent {
     const actualIonInSpectrum = this.getActualIonInSpectrum(formula, activeIon);
     this.outputFormula = parseLiteralToChemicalFormula(actualIonInSpectrum);
     const massStr = this.exactMass.toFixed(4);
-    this.substrateElectronFromExactMass();
     // render output
     this.render();
   }
@@ -123,6 +124,7 @@ export class MassComponent {
             element: activeIon as Element,
             count: 1,
           });
+          this.substrateElectronFromExactMass();
         }
         this.addElementToExactMass(activeIon);
       }
@@ -151,9 +153,15 @@ export class MassComponent {
     const mass = reduce(formulaLiteral, (total, elem: ElementCountPair) => {
       const currentElement = elem.element as Element;
       const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);
-      const currentMass = elementLookup[lookupIndex].mass;
-      total += currentMass * elem.count;
-      return total;
+      // TODO: error handling
+      if (~lookupIndex) {
+        const currentMass = elementLookup[lookupIndex].mass;
+        total += currentMass * elem.count;
+        return total;
+      } else {
+        this.renderError();
+        return total;
+      }
     },                  0);
     return mass;
   }
@@ -201,5 +209,12 @@ export class MassComponent {
     const weight = (this.exactMass * productYield / 100 * mmol).toFixed(0);
     $weight.innerHTML = `Yield: ${productYield}% (${weight} mg);`;
     clearDOMElement('#massError');
+  }
+
+  public static getInstance(): MassComponent {
+    if (!MassComponent.instance) {
+      return new MassComponent();
+    }
+    return MassComponent.instance;
   }
 }

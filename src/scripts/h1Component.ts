@@ -46,6 +46,7 @@ export class H1Component {
 
   private inputData: string;
   private hightlightData: boolean;
+  private static instance: H1Component;
 
   /**
    * Creates an instance of H1Component.
@@ -65,12 +66,9 @@ export class H1Component {
    * @memberof H1Component
    */
   public init(): void {
-    const $info = Array.from(document.querySelectorAll('input[name="info"]')) as HTMLInputElement[];
-    const $h1peaks = document.getElementById('h1peaks') as HTMLTextAreaElement;
-    [...$info, $h1peaks].forEach((elem) => {
-      elem.addEventListener('input', this.handle.bind(this));
-      elem.addEventListener('change', this.handle.bind(this));
-    });
+    const $peaks = document.getElementById('h1Peaks') as HTMLTextAreaElement;
+    $peaks.addEventListener('input', this.handle.bind(this));
+    $peaks.addEventListener('change', this.handle.bind(this));
     this.handle();
   }
 
@@ -87,7 +85,7 @@ export class H1Component {
     this.hightlightData = false;
     const data = this.getDataArray();
     if (data === null) {
-      this.renderError('Data not valid! Please copy data directly from MestReNova');
+      this.renderError('氢谱数据格式不正确！请直接从MestReNova中粘贴');
       return;
     }
     // splitting h1data array into describer and data
@@ -97,9 +95,9 @@ export class H1Component {
     // individual data describer, e.g. [1H NMR (600 MHz, dmso)]
     const describer: string[] = map(dataArr, head);
     // individual meta data array, e.g. [{type: 'H', freq: 600, solvent: 'dmso'}]
-    const metaDataArr: Metadata[] = this.getMetadata(describer);
+    const metaDataArr: (Metadata|null)[] = this.getMetadata(describer);
     if (some(metaDataArr, this.isMetadataError.bind(this))) {
-      this.renderError('Device data not valid! Please copy data directly from MestReNova');
+      this.renderError('频率或溶剂信息有误！请直接从MestReNova中粘贴');
       return ;
     }
     // individual peak data, e.g.
@@ -120,10 +118,10 @@ export class H1Component {
       return ;
     }
     const fixedPeakDataObj: H1Data[][] = map(peakDataObj, (peakDatum, index) => {
-      const freq = metaDataArr[index].freq;
+      const freq = (metaDataArr as Metadata[])[index].freq;
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    this.render(metaDataArr, fixedPeakDataObj);
+    this.render(metaDataArr as Metadata[], fixedPeakDataObj);
   }
   
   /**
@@ -153,7 +151,8 @@ export class H1Component {
   private renderStrArray(renderObjs: RenderObj[]) {
     const formattedPeakStrings = map(renderObjs, (obj: RenderObj) => {
       const peakStr = map(obj.peak, this.stringifyIndividualData.bind(this));
-      return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, ${solvents[obj.meta.solvent]}) δ `
+      return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
+      ${solvents[obj.meta.solvent].formattedString}) δ `
        + peakStr.join(', ') + '.';
     });
     const data = this.getDataArray() || [];
@@ -161,10 +160,9 @@ export class H1Component {
     forEach(data, (peakStr, index) => {
       output = this.hightlightData
         ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
-        : replace(output, data[index], formattedPeakStrings[index])
-      console.log(this.hightlightData, output, data[index]);
+        : replace(output, data[index], formattedPeakStrings[index]);
     });
-    return output;
+    return output.replace(/\n/g, '<br>');
   }
 
   /**
@@ -256,14 +254,15 @@ export class H1Component {
       };
     } else {
       const errText = this.inputData.replace(data, `<span class="danger-text">${data}</span>`);
-      this.renderError(`Peak data not valid! Please copy data directly from MestReNova! <br> value: ${errText}`);
+      this.renderError(`谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出：\
+       <br> ${errText}`);
       return;
     }
   }
 
   private getDataArray(): RegExpMatchArray|null {
     // 1H NMR data ends with '.' or ';'
-    const h1Reg = /(1H NMR.+\)[\.;])/g;
+    const h1Reg = /1H NMR.+\)[\.;\s]/g;
     // individual compound 1H NMR data strings, handle multiple data from input
     return this.inputData.match(h1Reg);
   }
@@ -312,16 +311,17 @@ export class H1Component {
   }
 
   private setDataFromInput(): void {
-    this.inputData = (<HTMLInputElement>document.getElementById('h1peaks')).value;
+    this.inputData = (<HTMLInputElement>document.getElementById('h1Peaks')).value;
   }
 
   private getMetadata(data: string[]) {
     return data.map((datum) => {
-      const nucleo = /\d+(\w)(?: NMR)/.exec(datum) || [];
-      const freq = /(\d+) MHz/.exec(datum) || [];
-      const solvent = /, (\w+)(:?-d6)?\)/i.exec(datum) || [];
+      const nucleo = /\d+(\w)(?: NMR)/.exec(datum);
+      const freq = /(\d+) MHz/.exec(datum);
+      const solvent = /, (\w+)(:?-d6)?\)/i.exec(datum);
       if (!nucleo || !freq || !solvent) {
-        this.renderError('Device data not valid! Please copy data directly from MestReNova');
+        this.renderError('频率或溶剂信息有误！请直接从MestReNova中粘贴');
+        return null;
       }
       return {
         type: nucleo[1] as Nucleo,
@@ -343,7 +343,7 @@ export class H1Component {
   private renderOutput(str): void {
     this.clearH1DOMElements();
     if (this.inputData !== '') {
-      const $output = document.getElementById('h1output') as HTMLDivElement;
+      const $output = document.getElementById('h1Output') as HTMLDivElement;
       $output.innerHTML = str;
     }
   }
@@ -358,6 +358,13 @@ export class H1Component {
 
   private clearH1DOMElements(): void {
     clearDOMElement('#h1Error');
-    clearDOMElement('#h1output');
+    clearDOMElement('#h1Output');
+  }
+
+  public static getInstance(): H1Component {
+    if (!H1Component.instance) {
+      return new H1Component();
+    }
+    return H1Component.instance;
   }
 }
