@@ -38,7 +38,7 @@ export class C13Component {
 
   private getDataArray() {
     // 13C NMR data ends with '.' or ';'
-    const c13Reg = /13C NMR.+?\d{1,3}\.\d[\.;\s]/g;
+    const c13Reg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;\s]/g;
     // individual compound 13C NMR data strings, handle multiple data from input
     return this.inputData.match(c13Reg);
   }
