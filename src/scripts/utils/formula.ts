@@ -1,5 +1,5 @@
 import { has, some, findIndex } from 'lodash';
-import { Element } from './utils/element';
+import { Element } from './element';
 
 export interface ElementCountPair {
   element: Element;

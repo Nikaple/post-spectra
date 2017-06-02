@@ -1,5 +1,5 @@
 import { reduce } from 'lodash';
-import { ElementCountPair } from '../formula';
+import { ElementCountPair } from './formula';
 
 /**
  * get the active radio button from a set of radio buttons

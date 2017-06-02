@@ -2,12 +2,11 @@ import '../styles/base.scss';
 
 import { MassComponent } from './massComponent';
 import { H1Component } from './h1Component';
+import { Tooltip } from './utils/tooltip';
 
 const massComponent = new MassComponent();
-massComponent.init();
-
 const h1Component = new H1Component();
-h1Component.init();
+const tooltip = new Tooltip();
 
 // import { Formula } from './formula';
 // let formula = new Formula('');

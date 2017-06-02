@@ -31,6 +31,7 @@ export class MassComponent {
     this.outputFormula = '';
     this.productYield = 0;
     this.mmol = 0;
+    this.init();
   }
 
   /**
@@ -128,7 +129,6 @@ export class MassComponent {
     }
     return formulaLiteral;
   }
-
 
   private substrateElectronFromExactMass() {
     this.exactMass -= massOfElectron;

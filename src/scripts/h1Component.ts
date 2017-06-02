@@ -45,6 +45,7 @@ export class H1Component {
   constructor() {
     this.inputData = '';
     this.hightlightData = false;
+    this.init();
   }
 
   public init(): void {
@@ -135,7 +136,10 @@ export class H1Component {
       } else if (peakObj.danger === true) {
         // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)'
         const placeholder = this.hightlightData
-          ? this.highlightPeakData(peakObj.peak as string, HighlightType.Red)
+          ? this.highlightPeakData(
+            peakObj.peak as string,
+            peakObj.errMsg as string,
+            HighlightType.Red)
           : peakObj.peak;
         return `${placeholder} (${peakObj.peakType}, \
         ${peakObj.hydrogenCount}H)`;
@@ -145,9 +149,13 @@ export class H1Component {
       }
     } else {
       // for data similar to '10.15 (d, J = 6.2 Hz, 1H)'
+      const renderedCouplingConstants = peakObj.couplingConstants.toFixed(1);
       const renderedCouplingConstant = (this.hightlightData && peakObj.warning)
-        ? this.highlightPeakData(peakObj.couplingConstants.toFixed(1), HighlightType.Yellow)
-        : peakObj.couplingConstants.toFixed(1);
+        ? this.highlightPeakData(
+          renderedCouplingConstants, 
+          peakObj.errMsg as string, 
+          HighlightType.Yellow)
+        : renderedCouplingConstants;
       return `${peakObj.peak} (${peakObj.peakType}, <em>J</em> = \
       ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
@@ -197,13 +205,12 @@ export class H1Component {
   }
 
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
-        // debugger;
     const peakDatumCopy = clone(peakDatum);
     // m & not range => error
     if (peakDatumCopy.peakType === 'm') {
       if (typeof peakDatumCopy.peak === 'string') {
         peakDatumCopy.danger = true;
-        peakDatumCopy.errMsg = 'm peaks with single peak value was reported';
+        peakDatumCopy.errMsg = '错误：多重峰化学位移不是区间形式';
       }
     } else if (peakDatumCopy.peakType === 'd' ||
       peakDatumCopy.peakType === 't') {
@@ -211,7 +218,7 @@ export class H1Component {
         peakDatumCopy.couplingConstants = 
         this.roundCouplingConstant(<number>peakDatumCopy.couplingConstants, freq);
         peakDatumCopy.warning = true;
-        peakDatumCopy.errMsg = `Original: J = ${peakDatum.couplingConstants}`;
+        peakDatumCopy.errMsg = `原始数据： <em>J</em> = ${peakDatum.couplingConstants}`;
       }
     } else if (peakDatum.peakType !== 's') {
       // treat other types of multiplet as m peak
@@ -219,7 +226,7 @@ export class H1Component {
       peakDatumCopy.peakType = 'm';
       peakDatumCopy.peak = 'PEAKRANGE';
       peakDatumCopy.couplingConstants = null;
-      peakDatumCopy.errMsg = 'Please give the data manually from MestReNova'
+      peakDatumCopy.errMsg = `警告：已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
     }
     return peakDatumCopy;
   }
@@ -260,11 +267,11 @@ export class H1Component {
     });
   }
 
-  private highlightPeakData(str: string, type: HighlightType): string {
+  private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
     if (type === HighlightType.Red) {
-      return `<span class="danger-text">${str}</span>`;
+      return `<span class="danger-text" data-tooltip="${errMsg}">${str}</span>`;
     } else if (type === HighlightType.Yellow) {
-      return `<span class="warning-text">${str}</span>`;
+      return `<span class="warning-text" data-tooltip="${errMsg}">${str}</span>`;
     }
     return str;
   }
@@ -276,8 +283,10 @@ export class H1Component {
   }
 
   private renderError(msg): void {
-    clearDOMElement('#h1output');
-    const $error = document.getElementById('h1Error') as HTMLDivElement;
-    $error.innerHTML = msg;
+    if (this.inputData !== '') {
+      clearDOMElement('#h1output');
+      const $error = document.getElementById('h1Error') as HTMLDivElement;
+      $error.innerHTML = msg;
+    }
   }
 }
