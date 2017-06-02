@@ -179,7 +179,7 @@ export class H1Component {
   private getPeakDataObj(data: string): H1Data|void {
     const regexWithCoupling = 
     /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
-    const regexWithoutCoupling = /(\d+\.\d{2}( - \d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    const regexWithoutCoupling = /(\d+\.\d{2}( – \d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {
@@ -190,7 +190,7 @@ export class H1Component {
         hydrogenCount: +couplingMatch[4],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(' - ');
+      const peakArr = nonCouplingMatch[1].split(' – ');
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
       return {
         peak,
@@ -283,8 +283,8 @@ export class H1Component {
   }
 
   private renderError(msg): void {
+    clearDOMElement('#h1output');
     if (this.inputData !== '') {
-      clearDOMElement('#h1output');
       const $error = document.getElementById('h1Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }
