@@ -2,7 +2,10 @@ import { strToPeaksArray,
   getActiveRadioButton,
   clearDOMElement,
   copyFormattedToClipboard } from './utils/utils';
-import { some, split, map, fill, forEach, head, tail, clone, reduce, every, indexOf, replace } from 'lodash';
+import { some, split, map, 
+  fill, forEach, head, 
+  tail, clone, reduce, 
+  every, indexOf, replace } from 'lodash';
 import { solvents, minFreq, maxFreq } from './utils/constants';
 
 enum HighlightType {
@@ -40,14 +43,27 @@ interface RenderObj {
 }
 
 export class H1Component {
+
   private inputData: string;
   private hightlightData: boolean;
+
+  /**
+   * Creates an instance of H1Component.
+   * 
+   * @memberof H1Component
+   */
   constructor() {
     this.inputData = '';
     this.hightlightData = false;
     this.init();
   }
 
+  /**
+   * initialize listeners
+   * @returns {void}
+   * 
+   * @memberof H1Component
+   */
   public init(): void {
     const $info = Array.from(document.querySelectorAll('input[name="info"]')) as HTMLInputElement[];
     const $h1peaks = document.getElementById('h1peaks') as HTMLTextAreaElement;
@@ -58,9 +74,17 @@ export class H1Component {
     this.handle();
   }
 
+  /**
+   * handle changes in H1Component
+   * 
+   * @private
+   * @returns {void} 
+   * 
+   * @memberof H1Component
+   */
   private handle(): void {
     this.setDataFromInput();
-    const data = this.getIndividualData();
+    const data = this.getDataArray();
     if (data === null) {
       this.renderError('Data not valid! Please copy data directly from MestReNova');
       return;
@@ -89,7 +113,7 @@ export class H1Component {
     const peakData: string[][] = map(dataArr, tail);
     // individual peak data objects,
     const peakDataObj = map(peakData, (peakDatum) => {
-      return map(peakDatum, this.getPeakDataObj);
+      return map(peakDatum, data => this.parseIndividualData(data));
     }) as H1Data[][];
     if (!peakDataObj) {
       return ;
@@ -101,6 +125,15 @@ export class H1Component {
     this.render(metaDataArr, fixedPeakDataObj);
   }
   
+  /**
+   * render data to screen
+   * 
+   * @private
+   * @param {Metadata[]} metaDataArr 
+   * @param {H1Data[][]} peakDataObj 
+   * 
+   * @memberof H1Component
+   */
   private render(metaDataArr: Metadata[], peakDataObj: H1Data[][]): void {
     const renderObjs:  RenderObj[] = [];
     forEach(metaDataArr, (meta: Metadata, index) => {
@@ -118,21 +151,38 @@ export class H1Component {
 
   private renderStrArray(renderObjs: RenderObj[]) {
     const formattedPeakStrings = map(renderObjs, (obj: RenderObj) => {
-      const peakStr = map(obj.peak, this.renderIndividualH1Data.bind(this));
+      const peakStr = map(obj.peak, this.stringifyIndividualData.bind(this));
       return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, ${solvents[obj.meta.solvent]}) δ `
        + peakStr.join(', ') + '.';
     });
-    const data = this.getIndividualData() || [];
+    const data = this.getDataArray() || [];
     let output = this.inputData;
     forEach(data, (peakStr, index) => {
-      output = replace(output, data[index], formattedPeakStrings[index]);
+      output = this.hightlightData
+        ? replace(output, data[index], formattedPeakStrings[index])
+        : replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
     });
     return output;
   }
 
-  private renderIndividualH1Data(peakObj: H1Data): string {
+  /**
+   * render individual peak data to string
+   * @example
+   * returns '7.10 - 6.68 (m, 1H)'
+   * this.stringifyIndividualData({
+   *  peak: [7.10, 6.68],
+   *  peakType: 'm',
+   *  couplingConstants: null,
+   *  hydrogenCount: 1
+   * });
+   * @private
+   * @param {H1Data} peakObj 
+   * @returns {string} 
+   * 
+   * @memberof H1Component
+   */
+  private stringifyIndividualData(peakObj: H1Data): string {
     if (peakObj.couplingConstants === null) {
-      console.log(peakObj);
       if (peakObj.peak.length === 2) {
         // for data similar to '7.10 - 6.68 (m, 1H)'
         return `${peakObj.peak[0]} − ${peakObj.peak[1]} \
@@ -180,10 +230,10 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private getPeakDataObj(data: string): H1Data|void {
+  private parseIndividualData(data: string): H1Data|void {
     const regexWithCoupling = 
     /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
-    const regexWithoutCoupling = /(\d+\.\d{2}( ?[–−-] ?\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    const regexWithoutCoupling = /(\d+\.\d{2}( +[–−-] +\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {
@@ -194,7 +244,7 @@ export class H1Component {
         hydrogenCount: +couplingMatch[4],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(/ ?[–−-] ?/g);
+      const peakArr = nonCouplingMatch[1].split(/ +[–−-] +/g);
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
       return {
         peak,
@@ -203,17 +253,18 @@ export class H1Component {
         hydrogenCount: +nonCouplingMatch[4],
       };
     } else {
-      this.renderError('Peak data not valid! Please copy data directly from  MestReNova');
+      this.renderError(`Peak data not valid! Please copy data directly from MestReNova! value: <span class="danger-text">${data}</span>`);
       return;
     }
   }
 
-  private getIndividualData(): RegExpMatchArray|null {
+  private getDataArray(): RegExpMatchArray|null {
     // 1H NMR data ends with '.' or ';'
     const h1Reg = /(1H NMR.+\)[\.;])/g;
     // individual compound 1H NMR data strings, handle multiple data from input
     return this.inputData.match(h1Reg);
   }
+
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
     const peakDatumCopy = clone(peakDatum);
     // m & not range => error
