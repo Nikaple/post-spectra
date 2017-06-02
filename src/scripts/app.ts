@@ -8,3 +8,7 @@ massComponent.init();
 
 const h1Component = new H1Component();
 h1Component.init();
+
+// import { Formula } from './formula';
+// let formula = new Formula('');
+// console.log(formula.toString());

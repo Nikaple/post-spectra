@@ -1,4 +1,10 @@
-import { has } from 'lodash';
+import { has, some, findIndex } from 'lodash';
+import { Element } from './utils/element';
+
+export interface ElementCountPair {
+  element: Element;
+  count: number;
+}
 
 export class Formula {
   private formula: string;
@@ -21,14 +27,14 @@ export class Formula {
    * new Formula('C13H22O11BrCl2').parse();
    * // not applicable
    * new Formula('(NH4)2CO3').parse();
-   * @returns {object} 
+   * @returns {object}
    * @memberof Formula
    */
-  public parse(): object {
+  public parse(): ElementCountPair[] {
     const extractorRegex = /([A-Z][a-z]*\d*)/g;
     const elementSet = this.formula.match(extractorRegex) || [];
-    const elementsObj = elementSet.reduce(this.convertElementSetToElementsObj.bind(this), {});
-    return elementsObj;
+    const elementsArr = elementSet.reduce(this.convertElementSetToElementsArr.bind(this), []);
+    return elementsArr;
   }
 
   /**
@@ -39,7 +45,7 @@ export class Formula {
    * @memberof Formula
    */
   public isEmpty(): boolean {
-    return this.toString() === '{}';
+    return this.toString() === '[]';
   }
 
   /**
@@ -68,7 +74,7 @@ export class Formula {
    * convert an element set to elements object 
    * @example
    * // returns {C: 13, H: 22, O: 11, Br: 1}
-   * convertElementSetToElementsObj(["C13","H22","O11","Br"]);
+   * convertElementSetToElementsArr(["C13","H22","O11","Br"]);
    * @private
    * @param {object} obj 
    * @param {string} element 
@@ -76,32 +82,40 @@ export class Formula {
    * 
    * @memberof Formula
    */
-  private convertElementSetToElementsObj(obj: object, element: string): object {
-    const [elementName, elementNum] = this.splitElementAndNumber(element);
-    obj[elementName] = has(obj, elementName)
-      ? obj[elementName] + elementNum
-      : elementNum;
-    return obj;
+  private convertElementSetToElementsArr(
+    elementsArr: ElementCountPair[], 
+    elementSet: string): ElementCountPair[] {
+    const { element, count } = this.splitElementAndNumber(elementSet);
+    const ind = findIndex(elementsArr, elementSet => elementSet.element === element);
+    if (~ind) {
+      elementsArr[ind].count += count;
+    } else {
+      elementsArr.push({ element, count });
+    }
+    return elementsArr;
   }
 
   /**
    * split element name and count
    * @example
-   * // returns ['H', 1]
+   * // returns { element: 'H', count: 1 }
    * splitElementAndNumber('H');
-   * // returns ['C', 10]
+   * // returns { element: 'C', count: 10 }
    * splitElementAndNumber('C10');
    * @private
    * @param {string} element 
-   * @returns {[string, number]} 
+   * @returns {ElementCountPair}
    * 
    * @memberof Formula
    */
-  private splitElementAndNumber(element: string): [string, number] {
+  private splitElementAndNumber(element: string): ElementCountPair {
     const getNum = /\d+/;
     const getName = /[A-Za-z]+/;
     const elementNum = element.match(getNum) || 1;
     const elementName = element.match(getName) || [];
-    return [elementName[0], Number(elementNum)];
+    return {
+      element: elementName[0] as Element, 
+      count: Number(elementNum),
+    };
   }
 }

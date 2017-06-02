@@ -1,9 +1,11 @@
-import { has, is, reduce } from 'lodash';
-import { Formula } from './formula';
-import elementLookup from './utils/elementLookup';
-import { getActiveRadioButton,
+import { some, reduce, keys, findIndex, find } from 'lodash';
+import { ElementCountPair, Formula } from './utils/formula';
+import { elementLookup, Element } from './utils/element';
+import {
+  getActiveRadioButton,
   parseLiteralToChemicalFormula,
-  clearDOMElement } from './utils/utils';
+  clearDOMElement,
+} from './utils/utils';
 import { massOfElectron } from './utils/constants';
 
 export class MassComponent {
@@ -17,7 +19,7 @@ export class MassComponent {
   private productYield: number;
   // mmol of input molecule
   private mmol: number;
-  
+
   /**
    * Creates an instance of MassComponent.
    * 
@@ -43,6 +45,7 @@ export class MassComponent {
       elem.addEventListener('input', this.handle.bind(this));
       elem.addEventListener('change', this.handle.bind(this));
     });
+    this.handle();
   }
 
   /**
@@ -54,7 +57,7 @@ export class MassComponent {
     // get DOM elements
     const $formula = document.getElementById('formula') as HTMLInputElement;
     const $radios = document.querySelectorAll(
-        'input[name="ion"]') as NodeListOf<HTMLInputElement>;
+      'input[name="ion"]') as NodeListOf<HTMLInputElement>;
     const $yield = document.getElementById('yield') as HTMLInputElement;
     const $mmol = document.getElementById('mmol') as HTMLInputElement;
 
@@ -71,7 +74,7 @@ export class MassComponent {
     const actualIonInSpectrum = this.getActualIonInSpectrum(formula, activeIon);
     this.outputFormula = parseLiteralToChemicalFormula(actualIonInSpectrum);
     const massStr = this.exactMass.toFixed(4);
-
+    this.substrateElectronFromExactMass();
     // render output
     this.render();
   }
@@ -103,21 +106,37 @@ export class MassComponent {
    * 
    * @memberof MassComponent
    */
-  private getActualIonInSpectrum(formula: Formula, activeIon: string): object {
+  private getActualIonInSpectrum(formula: Formula, activeIon: string): ElementCountPair[] {
     const formulaLiteral = formula.parse();
     if (!formula.isEmpty()) {
       this.exactMass = this.getExactMassOfMolecule(formula);
       // if activeIon is a chemical element, aka not 'None'
-      if (has(elementLookup, activeIon)) {
-        formulaLiteral[activeIon] = has(formulaLiteral, activeIon)
-          ? formulaLiteral[activeIon] + 1
-          : 1;
-        this.exactMass += elementLookup[activeIon];
+      const isElement = some(elementLookup, massObj => massObj.element === activeIon);
+      if (isElement) {
+        const ionIndex = findIndex(formulaLiteral, elemCountPair => 
+        elemCountPair.element === activeIon);
+        if (~ionIndex) {
+          formulaLiteral[ionIndex].count += 1;
+        } else {
+          formulaLiteral.push({
+            element: activeIon as Element,
+            count: 1,
+          });
+        }
+        this.addElementToExactMass(activeIon);
       }
     }
     return formulaLiteral;
   }
 
+
+  private substrateElectronFromExactMass() {
+    this.exactMass -= massOfElectron;
+  }
+
+  private addElementToExactMass(element) {
+    this.exactMass += find(elementLookup, massObj => massObj.element === element).mass;
+  }
   /**
    * calculate exact mass from a Formula object
    * 
@@ -129,8 +148,11 @@ export class MassComponent {
    */
   private getExactMassOfMolecule(formula: Formula): number {
     const formulaLiteral = formula.parse();
-    const mass = reduce(formulaLiteral, (total, elemNum, elem) => {
-      total += elementLookup[elem] * elemNum;
+    const mass = reduce(formulaLiteral, (total, elem: ElementCountPair) => {
+      const currentElement = elem.element as Element;
+      const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);
+      const currentMass = elementLookup[lookupIndex].mass;
+      total += currentMass * elem.count;
       return total;
     },                  0);
     return mass;
@@ -160,10 +182,9 @@ export class MassComponent {
    */
   private renderFormula(formula: string): void {
     const $newFormula = document.getElementById('newFormula') as HTMLDivElement;
-    // tslint:disable-next-line:max-line-length
-    $newFormula.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for ${formula}: ${this.exactMass.toFixed(4)} found: YOURDATA`;
+    $newFormula.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for \
+      ${formula}: ${this.exactMass.toFixed(4)} found: YOURDATA`;
     clearDOMElement('#massError');
-    
   }
 
   /**

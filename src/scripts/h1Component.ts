@@ -1,6 +1,14 @@
-import { strToPeaksArray, getActiveRadioButton } from './utils/utils';
-import { chain, split, map, fill, forEach, head, tail, clone, reduce, every } from 'lodash';
-import { solvents, MINFREQ, MAXFREQ } from './utils/deviceInfo';
+import { strToPeaksArray,
+  getActiveRadioButton,
+  clearDOMElement,
+  copyFormattedToClipboard } from './utils/utils';
+import { some, split, map, fill, forEach, head, tail, clone, reduce, every, indexOf } from 'lodash';
+import { solvents, minFreq, maxFreq } from './utils/constants';
+
+enum HighlightType {
+  Yellow = 0,
+  Red,
+}
 
 type Nucleo = 'H'|'C'|'F'|'P';
 type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
@@ -21,8 +29,9 @@ interface H1Data {
   peakType: Multiplet;
   couplingConstants: number|null;
   hydrogenCount: number;
-  modified?: boolean;
-  error?: string;
+  danger?: boolean;
+  warning?: boolean;
+  errMsg?: string;
 }
 
 interface RenderObj {
@@ -31,9 +40,11 @@ interface RenderObj {
 }
 
 export class H1Component {
-  private data: string;
+  private inputData: string;
+  private hightlightData: boolean;
   constructor() {
-    this.data = '';
+    this.inputData = '';
+    this.hightlightData = false;
   }
 
   public init(): void {
@@ -50,9 +61,9 @@ export class H1Component {
     this.setDataFromInput();
     const h1Reg = /(1H NMR.+\)\.)/g;
     // individual compound 1H NMR data strings, handle multiple data from input
-    const data = this.data.match(h1Reg);
+    const data = this.inputData.match(h1Reg);
     if (data === null) {
-      this.renderError('Data not valid! Please copy data directly from  MestReNova');
+      this.renderError('Data not valid! Please copy data directly from MestReNova');
       return;
     }
     // splitting h1data array into describer and data
@@ -61,9 +72,9 @@ export class H1Component {
     });
     // individual data describer, e.g. [1H NMR (600 MHz, dmso)]
     const describer: string[] = map(dataArr, head);
-    // individual meta data, e.g. 
+    // individual meta data array, e.g. [{type: 'H', freq: 600, solvent: 'dmso'}]
     const metaDataArr: Metadata[] = this.getMetadata(describer);
-    if (!every(metaDataArr, this.isMetadataValid)) {
+    if (some(metaDataArr, this.isMetadataError.bind(this))) {
       this.renderError('Device data not valid! Please copy data directly from MestReNova');
       return ;
     }
@@ -92,24 +103,27 @@ export class H1Component {
   }
   
   private render(metaDataArr: Metadata[], peakDataObj: H1Data[][]): void {
-    // get DOM elements for output data
-    const $output = document.getElementById('h1output') as HTMLDivElement;
-    const renderObj:  RenderObj[] = [];
+    const renderObjs:  RenderObj[] = [];
     forEach(metaDataArr, (meta: Metadata, index) => {
       const obj = {} as RenderObj;
       obj.meta = metaDataArr[index];
       obj.peak = peakDataObj[index];
-      renderObj.push(obj);
+      renderObjs.push(obj);
     });
-    const renderStrArray: string[] = map(renderObj, (obj: RenderObj) => {
-      if (obj.meta.type === 'H') {
-        const peakStr = map(obj.peak, this.renderIndividualH1Data);
-        return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, ${solvents[obj.meta.solvent]}) δ `
-         + peakStr.join(', ');
-      }
-      return '';
+    // copy unhighlighted string to clipboard
+    copyFormattedToClipboard(this.renderStrArray(renderObjs));
+    this.hightlightData = true;
+    const highlightedOutput = this.renderStrArray(renderObjs);
+    this.renderOutput(`"${highlightedOutput}" has been copied to clipboard.`);
+  }
+
+  private renderStrArray(renderObjs: RenderObj[]) {
+    const strArr = map(renderObjs, (obj: RenderObj) => {
+      const peakStr = map(obj.peak, this.renderIndividualH1Data.bind(this));
+      return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, ${solvents[obj.meta.solvent]}) δ `
+       + peakStr.join(', ');
     });
-    $output.innerHTML = renderStrArray.join('.<br>') + '.' ;
+    return strArr.join('.<br>') + '.';
   }
 
   private renderIndividualH1Data(peakObj: H1Data): string {
@@ -118,16 +132,24 @@ export class H1Component {
         // for data similar to '7.10 - 6.68 (m, 1H)'
         return `${peakObj.peak[0]} - ${peakObj.peak[1]} \
         (${peakObj.peakType}, ${peakObj.hydrogenCount}H)`;
-      } else if (peakObj.modified === true) {
-        // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)';
-        return `<span class="warning-text">PLACEHOLDER</span> (${peakObj.peakType}, \
+      } else if (peakObj.danger === true) {
+        // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)'
+        const placeholder = this.hightlightData
+          ? this.highlightPeakData(peakObj.peak as string, HighlightType.Red)
+          : peakObj.peak;
+        return `${placeholder} (${peakObj.peakType}, \
         ${peakObj.hydrogenCount}H)`;
       } else {
+        // for data similar to '2.30 (s, 3H)'
         return `${peakObj.peak} (${peakObj.peakType}, ${peakObj.hydrogenCount}H)`;
       }
     } else {
+      // for data similar to '10.15 (d, J = 6.2 Hz, 1H)'
+      const renderedCouplingConstant = (this.hightlightData && peakObj.warning)
+        ? this.highlightPeakData(peakObj.couplingConstants.toFixed(1), HighlightType.Yellow)
+        : peakObj.couplingConstants.toFixed(1);
       return `${peakObj.peak} (${peakObj.peakType}, <em>J</em> = \
-      ${peakObj.couplingConstants} Hz, ${peakObj.hydrogenCount}H)`;
+      ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
   /**
@@ -175,26 +197,29 @@ export class H1Component {
   }
 
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
+        // debugger;
     const peakDatumCopy = clone(peakDatum);
     // m & not range => error
     if (peakDatumCopy.peakType === 'm') {
-      if (peakDatumCopy.peak.length === 1) {
-        peakDatumCopy.peak = '';
-        peakDatumCopy.error = 'm peaks with single peak value was reported';
+      if (typeof peakDatumCopy.peak === 'string') {
+        peakDatumCopy.danger = true;
+        peakDatumCopy.errMsg = 'm peaks with single peak value was reported';
       }
     } else if (peakDatumCopy.peakType === 'd' ||
       peakDatumCopy.peakType === 't') {
       if (!this.isCouplingConstantValid(<number>peakDatumCopy.couplingConstants, freq)) {
         peakDatumCopy.couplingConstants = 
         this.roundCouplingConstant(<number>peakDatumCopy.couplingConstants, freq);
-        peakDatumCopy.modified = true;
+        peakDatumCopy.warning = true;
+        peakDatumCopy.errMsg = `Original: J = ${peakDatum.couplingConstants}`;
       }
     } else if (peakDatum.peakType !== 's') {
       // treat other types of multiplet as m peak
-      peakDatumCopy.modified = true;
+      peakDatumCopy.danger = true;
       peakDatumCopy.peakType = 'm';
-      peakDatumCopy.peak = '';
+      peakDatumCopy.peak = 'PEAKRANGE';
       peakDatumCopy.couplingConstants = null;
+      peakDatumCopy.errMsg = 'Please give the data manually from MestReNova'
     }
     return peakDatumCopy;
   }
@@ -209,14 +234,14 @@ export class H1Component {
     return MAGNIFICATION * couplingConstant % freq === 0;
   }
 
-  private isMetadataValid(meta: Metadata) {
-    return meta.freq > MINFREQ
-    && meta.freq < MAXFREQ
-    && solvents[meta.solvent];
+  private isMetadataError(meta: Metadata): boolean {
+    return meta.freq < minFreq
+    || meta.freq > maxFreq
+    || !solvents[meta.solvent];
   }
 
   private setDataFromInput(): void {
-    this.data = (<HTMLInputElement>document.getElementById('h1peaks')).value;
+    this.inputData = (<HTMLInputElement>document.getElementById('h1peaks')).value;
   }
 
   private getMetadata(data: string[]) {
@@ -235,7 +260,23 @@ export class H1Component {
     });
   }
 
+  private highlightPeakData(str: string, type: HighlightType): string {
+    if (type === HighlightType.Red) {
+      return `<span class="danger-text">${str}</span>`;
+    } else if (type === HighlightType.Yellow) {
+      return `<span class="warning-text">${str}</span>`;
+    }
+    return str;
+  }
+  
+  private renderOutput(str): void {
+    clearDOMElement('#h1Error');
+    const $output = document.getElementById('h1output') as HTMLDivElement;
+    $output.innerHTML = str;
+  }
+
   private renderError(msg): void {
+    clearDOMElement('#h1output');
     const $error = document.getElementById('h1Error') as HTMLDivElement;
     $error.innerHTML = msg;
   }

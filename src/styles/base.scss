@@ -11,40 +11,48 @@ h1 {
     margin-bottom: 5px;
 }
 
+@mixin tooltip {
+    border: 1px solid black;
+    display: inline-block;
+    position: absolute;
+    text-align: center;
+    background: #eaeaea;
+    background: linear-gradient(to bottom, #fdfdfd 0%, #eaeaea 100%);
+    box-shadow: 0px 0px 6px 2px rgba(110, 110, 110, .4);
+    color: #242424;
+}
+
 .my-form {
     width: 480px;
     margin: 0 auto;
+    .radio-ion-field {
+        display: block;
+        margin: 0 auto;
+    }
+    .radio-text {
+        font-size: 15px;
+    }
+    .radio-ion {
+        display: inline-block;
+    }
+    .input-formula-container {
+        display: inline-block;
+        margin: 0 auto;
+    }
+    .input-formula {
+        display: inline-block;
+    }
+    .output-text {
+        display: inline-block;
+        width: 480px;
+        text-align: left;
+    }
+    .warning-text {
+        background-color: #FFFF00;
+    }
+    .danger-text {
+        background-color: #FF8888;
+        // @include tooltip;
+    }
 }
 
-.radio-ion-field {
-    display: block;
-    margin: 0 auto;
-}
-
-.radio-text {
-    font-size: 15px;
-}
-
-.radio-ion {
-    display: inline-block;
-    /*margin: 0 20px;*/
-}
-
-.input-formula-container {
-    display: inline-block;
-    margin: 0 auto;
-}
-
-.input-formula {
-    display: inline-block;
-}
-
-.output-text {
-    display: inline-block;
-    width: 480px;
-    text-align: left;
-}
-
-.warning-text {
-    background-color: #FF8888;
-}
