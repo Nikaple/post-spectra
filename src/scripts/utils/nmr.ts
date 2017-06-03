@@ -82,7 +82,7 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
       break;
     }
     case 'C': { // 13C NMR data starts with 13C NMR and ends with '.' or ';' or white space
-      nmrReg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;]/g;
+      nmrReg = /13C NMR.+?\.[\w\d]+?[\.;]/g;
       break;
     }
     default: { // falls back to 1H NMR on default
