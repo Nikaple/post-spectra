@@ -31,5 +31,5 @@ export const solvents = {
 };
 
 // max and min of NMR frequency
-export const maxFreq = 1000;
+export const maxFreq = 800;
 export const minFreq = 100;

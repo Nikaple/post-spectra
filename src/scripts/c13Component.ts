@@ -1,4 +1,6 @@
 import { clearDOMElement } from './utils/utils';
+import { map, split, head, tail } from 'lodash';
+import { Metadata } from './utils/nmr';
 
 export class C13Component {
   private inputData: string;
@@ -26,6 +28,12 @@ export class C13Component {
       this.renderError('碳谱数据格式不正确！请直接从MestReNova中粘贴');
       return;
     }
+    const dataArr: string[][] = map(data, (datum) => {
+      return split(datum, / δ |, (?=\d{1,3}\.\d{1,3})/g);
+    });
+    console.log('dataArr ', dataArr);
+    const describer: string[] = map(dataArr, head);
+    // const metaDataArr: (Metadata|null)[] = this.getMetadata(describer);
   }
 
   private render() {
@@ -36,11 +44,17 @@ export class C13Component {
     this.inputData = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
   }
 
-  private getDataArray() {
-    // 13C NMR data ends with '.' or ';'
+  private getDataArray(): string[]|null {
+    // 13C NMR data ends with '.' or ';' or white space
     const c13Reg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;\s]/g;
     // individual compound 13C NMR data strings, handle multiple data from input
-    return this.inputData.match(c13Reg);
+    const match = this.inputData.match(c13Reg);
+    if (match === null) {
+      return null;
+    } else {
+      // cut the '.' or ';' or white space at the end
+      return map(match, str => str.substr(0, str.length - 1));
+    }
   }
 
   private renderOutput(str): void {

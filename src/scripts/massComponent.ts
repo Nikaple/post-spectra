@@ -41,7 +41,7 @@ export class MassComponent {
    * 
    * @memberof MassComponent
    */
-  public init(): void {
+  private init(): void {
     const $mass = Array.from(document.querySelectorAll('input[name="mass"]'));
     const $ion = Array.from(document.querySelectorAll('input[name="ion"]'));
     [...$mass, ...$ion].forEach((elem) => {

@@ -7,44 +7,20 @@ import { some, split, map,
   tail, clone, reduce, 
   every, indexOf, replace } from 'lodash';
 import { solvents, minFreq, maxFreq } from './utils/constants';
+import { Nucleo, Multiplet, Metadata, H1Data,
+  H1RenderObj, getDataArray, splitDataArray, 
+  getDescriberArray, getMetadataFromDescriber, getPeakDataArray, 
+  isMetadataError,
+} from './utils/nmr';
 
-enum HighlightType {
+export enum HighlightType {
   Yellow = 0,
   Red,
 }
 
-type Nucleo = 'H'|'C'|'F'|'P';
-type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
-
-interface CouplingConstant {
-  value: number;
-  index: number;
-}
-
-interface Metadata {
-  type: Nucleo;
-  freq: number;
-  solvent: string;
-}
-
-interface H1Data {
-  peak: string|string[];
-  peakType: Multiplet;
-  couplingConstants: number|null;
-  hydrogenCount: number;
-  danger?: boolean;
-  warning?: boolean;
-  errMsg?: string;
-}
-
-interface RenderObj {
-  meta: Metadata;
-  peak: H1Data[];
-}
-
 export class H1Component {
 
-  private inputData: string;
+  private data: string;
   private hightlightData: boolean;
   private static instance: H1Component;
 
@@ -54,7 +30,7 @@ export class H1Component {
    * @memberof H1Component
    */
   constructor() {
-    this.inputData = '';
+    this.data = '';
     this.hightlightData = false;
     this.init();
   }
@@ -65,7 +41,7 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  public init(): void {
+  private init(): void {
     const $peaks = document.getElementById('h1Peaks') as HTMLTextAreaElement;
     $peaks.addEventListener('input', this.handle.bind(this));
     $peaks.addEventListener('change', this.handle.bind(this));
@@ -83,22 +59,17 @@ export class H1Component {
   private handle(): void {
     this.setDataFromInput();
     this.hightlightData = false;
-    const data = this.getDataArray();
-    if (data === null) {
+    const dataArr = getDataArray(this.data, 'H');
+    if (dataArr === null) {
       this.renderError('氢谱数据格式不正确！请直接从MestReNova中粘贴');
       return;
     }
-    // splitting h1data array into describer and data
-    const dataArr: string[][] = map(data, (datum) => {
-      return split(datum, / δ |, (?=\d+\.\d{2})/g);
-    });
-    // individual data describer, e.g. [1H NMR (600 MHz, dmso)]
-    const describer: string[] = map(dataArr, head);
-    // individual meta data array, e.g. [{type: 'H', freq: 600, solvent: 'dmso'}]
-    const metaDataArr: (Metadata|null)[] = this.getMetadata(describer);
-    if (some(metaDataArr, this.isMetadataError.bind(this))) {
+    const splittedDataArr: string[][] = splitDataArray(dataArr);
+    const describerArr: string[] = getDescriberArray(splittedDataArr);
+    const metaDataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr);
+    if (some(metaDataArr, metadata => isMetadataError(metadata, 'H'))) {
       this.renderError('频率或溶剂信息有误！请直接从MestReNova中粘贴');
-      return ;
+      return;
     }
     // individual peak data, e.g.
     // [[
@@ -109,7 +80,7 @@ export class H1Component {
     //   '4.46 (s, 2H)', 
     //   '2.30 (s, 3H).'
     // ]];
-    const peakData: string[][] = map(dataArr, tail);
+    const peakData: string[][] = getPeakDataArray(splittedDataArr);
     // individual peak data objects,
     const peakDataObj = map(peakData, (peakDatum) => {
       return map(peakDatum, data => this.parseIndividualData(data));
@@ -134,29 +105,29 @@ export class H1Component {
    * @memberof H1Component
    */
   private render(metaDataArr: Metadata[], peakDataObj: H1Data[][]): void {
-    const renderObjs:  RenderObj[] = [];
+    const h1RenderObjs:  H1RenderObj[] = [];
     forEach(metaDataArr, (meta: Metadata, index) => {
-      const obj = {} as RenderObj;
+      const obj = {} as H1RenderObj;
       obj.meta = metaDataArr[index];
       obj.peak = peakDataObj[index];
-      renderObjs.push(obj);
+      h1RenderObjs.push(obj);
     });
     // copy unhighlighted string to clipboard
-    copyFormattedToClipboard(this.renderStrArray(renderObjs));
+    copyFormattedToClipboard(this.renderStrArray(h1RenderObjs));
     this.hightlightData = true;
-    const highlightedOutput = this.renderStrArray(renderObjs);
+    const highlightedOutput = this.renderStrArray(h1RenderObjs);
     this.renderOutput(`"${highlightedOutput}" has been copied to clipboard.`);
   }
 
-  private renderStrArray(renderObjs: RenderObj[]) {
-    const formattedPeakStrings = map(renderObjs, (obj: RenderObj) => {
+  private renderStrArray(h1RenderObjs: H1RenderObj[]) {
+    const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
       const peakStr = map(obj.peak, this.stringifyIndividualData.bind(this));
       return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
       ${solvents[obj.meta.solvent].formattedString}) δ `
        + peakStr.join(', ') + '.';
     });
-    const data = this.getDataArray() || [];
-    let output = this.inputData;
+    const data = getDataArray(this.data, 'H') || [];
+    let output = this.data;
     forEach(data, (peakStr, index) => {
       output = this.hightlightData
         ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
@@ -214,15 +185,14 @@ export class H1Component {
       ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
+  
   /**
    * returns object form of peak data
    * @example 
    * [[
-   *   {"peak":"7.21","peakType":"d","couplingConstants":9.7,"hydrogenCount":2},
    *   {"peak":"7.15","peakType":"t","couplingConstants":11.2,"hydrogenCount":1},
    *   {"peak":["7.10","6.68"],"peakType":"m","couplingConstants":null,"hydrogenCount":1},
-   *   {"peak":"4.46","peakType":"s","couplingConstants":null,"hydrogenCount":2},
-   *   {"peak":"2.30","peakType":"s","couplingConstants":null,"hydrogenCount":3}
+   *   {"peak":"4.46","peakType":"s","couplingConstants":null,"hydrogenCount":3},
    * ]]
    * @private
    * @param {string} data 
@@ -253,18 +223,11 @@ export class H1Component {
         hydrogenCount: +nonCouplingMatch[4],
       };
     } else {
-      const errText = this.inputData.replace(data, `<span class="danger-text">${data}</span>`);
+      const errText = this.data.replace(data, `<span class="danger-text">${data}</span>`);
       this.renderError(`谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出：\
        <br> ${errText}`);
       return;
     }
-  }
-
-  private getDataArray(): RegExpMatchArray|null {
-    // 1H NMR data ends with '.' or ';'
-    const h1Reg = /1H NMR.+\)[\.;\s]/g;
-    // individual compound 1H NMR data strings, handle multiple data from input
-    return this.inputData.match(h1Reg);
   }
 
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
@@ -304,31 +267,8 @@ export class H1Component {
     return MAGNIFICATION * couplingConstant % freq === 0;
   }
 
-  private isMetadataError(meta: Metadata): boolean {
-    return meta.freq < minFreq
-    || meta.freq > maxFreq
-    || !solvents[meta.solvent];
-  }
-
   private setDataFromInput(): void {
-    this.inputData = (<HTMLInputElement>document.getElementById('h1Peaks')).value;
-  }
-
-  private getMetadata(data: string[]) {
-    return data.map((datum) => {
-      const nucleo = /\d+(\w)(?: NMR)/.exec(datum);
-      const freq = /(\d+) MHz/.exec(datum);
-      const solvent = /, (\w+)(:?-d6)?\)/i.exec(datum);
-      if (!nucleo || !freq || !solvent) {
-        this.renderError('频率或溶剂信息有误！请直接从MestReNova中粘贴');
-        return null;
-      }
-      return {
-        type: nucleo[1] as Nucleo,
-        freq: +freq[1],
-        solvent: solvent[1].toLowerCase(),
-      };
-    });
+    this.data = (<HTMLInputElement>document.getElementById('h1Peaks')).value;
   }
 
   private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
@@ -342,7 +282,7 @@ export class H1Component {
 
   private renderOutput(str): void {
     this.clearH1DOMElements();
-    if (this.inputData !== '') {
+    if (this.data !== '') {
       const $output = document.getElementById('h1Output') as HTMLDivElement;
       $output.innerHTML = str;
     }
@@ -350,7 +290,7 @@ export class H1Component {
 
   private renderError(msg): void {
     this.clearH1DOMElements();
-    if (this.inputData !== '') {
+    if (this.data !== '') {
       const $error = document.getElementById('h1Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }
