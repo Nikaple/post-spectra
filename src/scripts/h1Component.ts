@@ -8,13 +8,9 @@ import { some, split, map,
   every, indexOf, replace } from 'lodash';
 import { solventInfo, minFreq, maxFreq } from './utils/constants';
 import { Nucleo, Multiplet, Metadata, H1Data,
-  H1RenderObj, handleNMRData, getDataArray,
+  H1RenderObj, handleNMRData, getDataArray, HighlightType, highlightPeakData,
 } from './utils/nmr';
 
-export enum HighlightType {
-  Yellow = 0,
-  Red,
-}
 
 export class H1Component {
 
@@ -83,7 +79,7 @@ export class H1Component {
       const freq = (metadataArr as Metadata[])[index].freq;
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    this.render(metadataArr as Metadata[], fixedPeakDataObj);
+    this.render(metadataArr, fixedPeakDataObj);
   }
   
   /**
@@ -102,16 +98,16 @@ export class H1Component {
    * render data to screen
    * 
    * @private
-   * @param {Metadata[]} metaDataArr 
+   * @param {Metadata[]} metadataArr 
    * @param {H1Data[][]} peakDataObj 
    * 
    * @memberof H1Component
    */
-  private render(metaDataArr: Metadata[], peakDataObj: H1Data[][]): void {
+  private render(metadataArr: Metadata[], peakDataObj: H1Data[][]): void {
     const h1RenderObjs:  H1RenderObj[] = [];
-    forEach(metaDataArr, (meta: Metadata, index) => {
+    forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as H1RenderObj;
-      obj.meta = metaDataArr[index];
+      obj.meta = metadataArr[index];
       obj.peak = peakDataObj[index];
       h1RenderObjs.push(obj);
     });
@@ -124,7 +120,7 @@ export class H1Component {
 
   private renderStrArray(h1RenderObjs: H1RenderObj[]) {
     const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
-      const peakStr = map(obj.peak, this.stringifyIndividualData.bind(this));
+      const peakStr = map(obj.peak, this.stringifyPeakData.bind(this));
       return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
       ${solventInfo[obj.meta.solvent].formattedString}) δ `
        + peakStr.join(', ');
@@ -140,10 +136,30 @@ export class H1Component {
   }
 
   /**
+   * render metadata to string
+   * @example
+   * // returns `<sup>1</sup>H NMR (500 MHz, DMSO-<em>d</em><sub>6</sub>) δ `
+   * stringifyMetadata({
+   *   type: 'H',
+   *   freq: 500,
+   *   solvent: dmso,
+   * });
+   * @private
+   * @param {Metadata} metadata 
+   * @returns {string}
+   * 
+   * @memberof H1Component
+   */
+  private stringifyMetadata(metadata: Metadata) {
+    return `<sup>1</sup>H NMR (${metadata.freq} MHz, \
+      ${solventInfo[metadata.solvent].formattedString}) δ `;
+  }
+
+  /**
    * render individual peak data to string
    * @example
-   * returns '7.10 - 6.68 (m, 1H)'
-   * this.stringifyIndividualData({
+   * // returns '7.10 - 6.68 (m, 1H)'
+   * this.stringifyPeakData({
    *  peak: [7.10, 6.68],
    *  peakType: 'm',
    *  couplingConstants: null,
@@ -155,7 +171,7 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private stringifyIndividualData(peakObj: H1Data): string {
+  private stringifyPeakData(peakObj: H1Data): string {
     if (peakObj.couplingConstants === null) {
       if (peakObj.peak.length === 2) {
         // for data similar to '7.10 - 6.68 (m, 1H)'
@@ -164,10 +180,10 @@ export class H1Component {
       } else if (peakObj.danger === true) {
         // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)'
         const placeholder = this.hightlightData
-          ? this.highlightPeakData(
+          ? highlightPeakData(
             peakObj.peak as string,
-            peakObj.errMsg as string,
-            HighlightType.Red)
+            HighlightType.Red,
+            peakObj.errMsg as string)
           : peakObj.peak;
         return `${placeholder} (${peakObj.peakType}, \
         ${peakObj.hydrogenCount}H)`;
@@ -179,10 +195,10 @@ export class H1Component {
       // for data similar to '10.15 (d, J = 6.2 Hz, 1H)'
       const renderedCouplingConstants = peakObj.couplingConstants.toFixed(1);
       const renderedCouplingConstant = (this.hightlightData && peakObj.warning)
-        ? this.highlightPeakData(
+        ? highlightPeakData(
           renderedCouplingConstants, 
-          peakObj.errMsg as string, 
-          HighlightType.Yellow)
+          HighlightType.Yellow,
+          peakObj.errMsg as string)
         : renderedCouplingConstants;
       return `${peakObj.peak} (${peakObj.peakType}, <em>J</em> = \
       ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;

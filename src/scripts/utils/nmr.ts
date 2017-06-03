@@ -4,6 +4,11 @@ import { minFreq, maxFreq, solventInfo } from './constants';
 export type Nucleo = 'H'|'C'|'F'|'P';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
 
+export enum HighlightType {
+  Yellow = 0,
+  Red,
+}
+
 export interface Metadata {
   type: Nucleo;
   freq: number;
@@ -25,6 +30,11 @@ export type C13Data = string|null;
 export interface H1RenderObj {
   meta: Metadata;
   peak: H1Data[];
+}
+
+export interface C13RenderObj {
+  meta: Metadata;
+  peak: C13Data[];
 }
 
 interface ParsedData {
@@ -86,6 +96,16 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
   } else { // cut the '.' or ';' or white space at the end
     return map(match, str => str.substr(0, str.length - 1));
   }
+}
+
+export function highlightPeakData(str: string, type: HighlightType, errMsg?: string) {
+  const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
+  if (type === HighlightType.Red) {
+    return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;
+  } else if (type === HighlightType.Yellow) {
+    return `<span class="warning-text" ${tooltipAttribute}">${str}</span>`;
+  }
+  return str;
 }
 
 /**
