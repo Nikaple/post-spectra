@@ -1,15 +1,27 @@
 import { clearDOMElement } from './utils/utils';
-import { map, split, head, tail } from 'lodash';
-import { Metadata } from './utils/nmr';
+import { compact, difference, map, split, head, tail, some, clone } from 'lodash';
+import { Nucleo, Metadata, C13Data, handleNMRData,
+} from './utils/nmr';
+import { solventInfo } from './utils/constants'; 
 
 export class C13Component {
-  private inputData: string;
+  private data: string;
   private hightlightData: boolean;
+  private errMsg: {
+    dataErr: string;
+    infoErr: string;
+    peakErr: string;
+  };
   private static instance: C13Component;
 
   constructor() {
-    this.inputData = '';
+    this.data = '';
     this.hightlightData = false;
+    this.errMsg = {
+      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
+      infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
+      peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
+    };
     this.init();
   }
 
@@ -21,45 +33,61 @@ export class C13Component {
   }
 
   private handle() {
-    this.setDataFromInput();
-    this.hightlightData = false;
-    const data = this.getDataArray();
-    if (data === null) {
-      this.renderError('碳谱数据格式不正确！请直接从MestReNova中粘贴');
+    this.reset();
+    const parsedData = handleNMRData('C', this);
+    if (parsedData === null) {
       return;
     }
-    const dataArr: string[][] = map(data, (datum) => {
-      return split(datum, / δ |, (?=\d{1,3}\.\d{1,3})/g);
-    });
-    console.log('dataArr ', dataArr);
-    const describer: string[] = map(dataArr, head);
-    // const metaDataArr: (Metadata|null)[] = this.getMetadata(describer);
+    const peakData = parsedData.peakData as C13Data[][];
+    const metadataArr = parsedData.metadataArr as Metadata[];
+    const peakDataCopy = clone(peakData);
+    const deletedPeaks = map(peakData)
+    // 先计算删除的peaks，然后再对数据作处理。
+    // const fixedPeakData = map(peakDataCopy, (peakDatum, index) => {
+    //   const roundedPeaks = map(peakDatum, (data) => {
+    //     return this.fixC13Peaks(data, metadataArr[index].solvent);
+    //   });
+    //   const compactedPeaks = compact(roundedPeaks);
+    //   return compactedPeaks;
+    // }) as C13Data[][];
+    // const deletedPeaks = map(peakData, (peakDatum, index) => {
+    //   debugger;
+    //   return difference(peakDatum, fixedPeakData[index]);
+    // });
   }
-
+  
+  /**
+   * reset status
+   * 
+   * @private
+   * 
+   * @memberof C13Component
+   */
+  private reset() {
+    this.setDataFromInput();
+    this.hightlightData = false;
+  } 
+  
   private render() {
     
   }
 
   private setDataFromInput(): void {
-    this.inputData = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
+    this.data = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
   }
 
-  private getDataArray(): string[]|null {
-    // 13C NMR data ends with '.' or ';' or white space
-    const c13Reg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;\s]/g;
-    // individual compound 13C NMR data strings, handle multiple data from input
-    const match = this.inputData.match(c13Reg);
-    if (match === null) {
+  private fixC13Peaks(peak: C13Data, solvent: string): C13Data|null {
+    const solventPeakRange: number[] = solventInfo[solvent].residualRange;
+    const peakValue = Number(peak);
+    if (peakValue >= solventPeakRange[0] && peakValue <= solventPeakRange[1]) {
       return null;
-    } else {
-      // cut the '.' or ';' or white space at the end
-      return map(match, str => str.substr(0, str.length - 1));
     }
+    return <C13Data>peakValue.toFixed(1);
   }
 
   private renderOutput(str): void {
     this.clearC13DOMElements();
-    if (this.inputData !== '') {
+    if (this.data !== '') {
       const $output = document.getElementById('c13Output') as HTMLDivElement;
       $output.innerHTML = str;
     }
@@ -67,7 +95,7 @@ export class C13Component {
 
   private renderError(msg): void {
     this.clearC13DOMElements();
-    if (this.inputData !== '') {
+    if (this.data !== '') {
       const $error = document.getElementById('c13Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }

@@ -1,5 +1,5 @@
-import { map, head, tail, split } from 'lodash';
-import { minFreq, maxFreq, solvents } from './constants';
+import { map, head, tail, split, some } from 'lodash';
+import { minFreq, maxFreq, solventInfo } from './constants';
 
 export type Nucleo = 'H'|'C'|'F'|'P';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
@@ -20,9 +20,33 @@ export interface H1Data {
   errMsg?: string; // message on hover
 }
 
+export type C13Data = string|null;
+
 export interface H1RenderObj {
   meta: Metadata;
   peak: H1Data[];
+}
+
+interface ParsedData {
+  peakData: string[][];
+  metadataArr: (Metadata|null)[];
+}
+
+export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
+  const dataArr = getDataArray(thisArg.data, type);
+  if (dataArr === null) {
+    thisArg.renderError(thisArg.errMsg.dataErr);
+    return null;
+  }
+  const splittedDataArr: string[][] = splitDataArray(dataArr);
+  const describerArr: string[] = getDescriberArray(splittedDataArr);
+  const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr);
+  const peakData: string[][] = getPeakDataArray(splittedDataArr);
+  if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
+    thisArg.renderError(thisArg.errMsg.infoErr);
+    return null;
+  }
+  return { peakData, metadataArr };
 }
 
 /**
@@ -44,15 +68,15 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
   let nmrReg: RegExp;
   switch (type) {
     case 'H': { // 1H NMR data starts with 13C NMR and ends with '.' or ';' or white space
-      nmrReg = /1H NMR.+\)[\.;\s]/g;
+      nmrReg = /1H NMR.+\)[\.;]/g;
       break;
     }
     case 'C': { // 13C NMR data starts with 13C NMR and ends with '.' or ';' or white space
-      nmrReg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;\s]/g;
+      nmrReg = /13C NMR.+?\d{1,3}\.\d{1,2}[\.;]/g;
       break;
     }
     default: { // falls back to 1H NMR on default
-      nmrReg = /1H NMR.+\)[\.;\s]/g;
+      nmrReg = /1H NMR.+\)[\.;]/g;
       break;
     }
   }
@@ -81,7 +105,7 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
  * @param {string[]} dataArr 
  * @returns 
  */
-export function splitDataArray(dataArr: string[]) {
+function splitDataArray(dataArr: string[]) {
   return map(dataArr, (datum) => {
     return split(datum, / δ |, *(?!\d+\.\d+\s+\w)(?=\d{1,3}\.\d{1,3})/g);
   });
@@ -104,7 +128,7 @@ export function splitDataArray(dataArr: string[]) {
  * @param {any} splittedDataArr 
  * @returns 
  */
-export function getDescriberArray(splittedDataArr): string[] {
+function getDescriberArray(splittedDataArr): string[] {
   return map(splittedDataArr, head);
 }
 
@@ -130,7 +154,7 @@ export function getDescriberArray(splittedDataArr): string[] {
  * @param {any} splittedDataArr 
  * @returns {string[][]} 
  */
-export function getPeakDataArray(splittedDataArr): string[][] {
+function getPeakDataArray(splittedDataArr): string[][] {
   return map(splittedDataArr, tail);
 }
 
@@ -144,7 +168,7 @@ export function getPeakDataArray(splittedDataArr): string[][] {
  * @param {string[]} describerArr 
  * @returns {((Metadata|null)[])} 
  */
-export function getMetadataFromDescriber(describerArr: string[]): (Metadata|null)[] {
+function getMetadataFromDescriber(describerArr: string[]): (Metadata|null)[] {
   return describerArr.map((datum) => {
     const nucleo = /\d+(\w)(?: NMR)/.exec(datum);
     const freq = /(\d+) MHz/.exec(datum);
@@ -168,7 +192,7 @@ export function getMetadataFromDescriber(describerArr: string[]): (Metadata|null
  * @param {Nucleo} type 
  * @returns {boolean} 
  */
-export function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
+function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
   if (!meta) {
     return false;
   }
@@ -176,5 +200,5 @@ export function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
   const decay = type === 'H' ? 1 : 4;
   return meta.freq < minFreq / decay
     || meta.freq > maxFreq / decay
-    || !solvents[meta.solvent];
+    || !solventInfo[meta.solvent];
 }

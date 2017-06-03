@@ -6,11 +6,9 @@ import { some, split, map,
   fill, forEach, head, 
   tail, clone, reduce, 
   every, indexOf, replace } from 'lodash';
-import { solvents, minFreq, maxFreq } from './utils/constants';
+import { solventInfo, minFreq, maxFreq } from './utils/constants';
 import { Nucleo, Multiplet, Metadata, H1Data,
-  H1RenderObj, getDataArray, splitDataArray, 
-  getDescriberArray, getMetadataFromDescriber, getPeakDataArray, 
-  isMetadataError,
+  H1RenderObj, handleNMRData, getDataArray,
 } from './utils/nmr';
 
 export enum HighlightType {
@@ -22,6 +20,11 @@ export class H1Component {
 
   private data: string;
   private hightlightData: boolean;
+  private errMsg: {
+    dataErr: string;
+    infoErr: string;
+    peakErr: string;
+  };
   private static instance: H1Component;
 
   /**
@@ -32,6 +35,11 @@ export class H1Component {
   constructor() {
     this.data = '';
     this.hightlightData = false;
+    this.errMsg = {
+      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
+      infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
+      peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
+    };
     this.init();
   }
 
@@ -57,30 +65,13 @@ export class H1Component {
    * @memberof H1Component
    */
   private handle(): void {
-    this.setDataFromInput();
-    this.hightlightData = false;
-    const dataArr = getDataArray(this.data, 'H');
-    if (dataArr === null) {
-      this.renderError('氢谱数据格式不正确！请直接从MestReNova中粘贴');
+    this.reset();
+    const parsedData = handleNMRData('H', this);
+    if (parsedData === null) {
       return;
     }
-    const splittedDataArr: string[][] = splitDataArray(dataArr);
-    const describerArr: string[] = getDescriberArray(splittedDataArr);
-    const metaDataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr);
-    if (some(metaDataArr, metadata => isMetadataError(metadata, 'H'))) {
-      this.renderError('频率或溶剂信息有误！请直接从MestReNova中粘贴');
-      return;
-    }
-    // individual peak data, e.g.
-    // [[
-    //   '7.21 (d, J = 9.7 Hz, 2H)',
-    //   '7.15 (t, J = 11.2 Hz, 1H)', 
-    //   '7.65 (dd, J = 12.1, 1.2 Hz, 2H)', 
-    //   '7.10 - 6.68 (m, 1H)', 
-    //   '4.46 (s, 2H)', 
-    //   '2.30 (s, 3H).'
-    // ]];
-    const peakData: string[][] = getPeakDataArray(splittedDataArr);
+    const peakData = parsedData.peakData;
+    const metadataArr = <Metadata[]>parsedData.metadataArr;
     // individual peak data objects,
     const peakDataObj = map(peakData, (peakDatum) => {
       return map(peakDatum, data => this.parseIndividualData(data));
@@ -89,12 +80,24 @@ export class H1Component {
       return ;
     }
     const fixedPeakDataObj: H1Data[][] = map(peakDataObj, (peakDatum, index) => {
-      const freq = (metaDataArr as Metadata[])[index].freq;
+      const freq = (metadataArr as Metadata[])[index].freq;
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    this.render(metaDataArr as Metadata[], fixedPeakDataObj);
+    this.render(metadataArr as Metadata[], fixedPeakDataObj);
   }
   
+  /**
+   * reset status
+   * 
+   * @private
+   * 
+   * @memberof H1Component
+   */
+  private reset() {
+    this.setDataFromInput();
+    this.hightlightData = false;
+  } 
+
   /**
    * render data to screen
    * 
@@ -123,8 +126,8 @@ export class H1Component {
     const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
       const peakStr = map(obj.peak, this.stringifyIndividualData.bind(this));
       return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
-      ${solvents[obj.meta.solvent].formattedString}) δ `
-       + peakStr.join(', ') + '.';
+      ${solventInfo[obj.meta.solvent].formattedString}) δ `
+       + peakStr.join(', ');
     });
     const data = getDataArray(this.data, 'H') || [];
     let output = this.data;
@@ -224,8 +227,7 @@ export class H1Component {
       };
     } else {
       const errText = this.data.replace(data, `<span class="danger-text">${data}</span>`);
-      this.renderError(`谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出：\
-       <br> ${errText}`);
+      this.renderError(this.errMsg.peakErr + errText);
       return;
     }
   }

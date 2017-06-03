@@ -2,10 +2,10 @@
 export const massOfElectron = 0.000549;
 
 // available solvents
-export const solvents = {
+export const solventInfo = {
   dmso: {
     formattedString: 'DMSO-<em>d</em><sub>6</sub>',
-    residualRange: [[39, 40]],
+    residualRange: [39, 40],
     peaks: 7,
   },
   cdcl3: {
