@@ -1,8 +1,8 @@
-import { has, some, findIndex } from 'lodash';
-import { Element } from './element';
+import { has, some, findIndex, reduce } from 'lodash';
+import { Element, elementLookup, isElement } from './element';
 
 export interface ElementCountPair {
-  element: Element;
+  element: Element|null;
   count: number;
 }
 
@@ -23,17 +23,21 @@ export class Formula {
    * this is only a simple parser, to convert chemical formula (without
    * parenthesis) generated from ChemDraw into formula object
    * @example
-   * // returns {C: 13, H: 22, O: 11, Br: 1, Cl: 2}
+   * // returns [{element: C, count: 13},
+   * //   {element: H, count: 22},
+   * //   {element: O, count: 11}, 
+   * //   {element: Br, count: 1},
+   * //   {element: Cl, count: 2}]
    * new Formula('C13H22O11BrCl2').parse();
    * // not applicable
    * new Formula('(NH4)2CO3').parse();
    * @returns {object}
    * @memberof Formula
    */
-  public parse(): ElementCountPair[] {
+  public parse(): ElementCountPair[]|null {
     const extractorRegex = /([A-Z][a-z]*\d*)/g;
     const elementSet = this.formula.match(extractorRegex) || [];
-    const elementsArr = elementSet.reduce(this.convertElementSetToElementsArr.bind(this), []);
+    const elementsArr = this.convertElementSetToElementsArr(elementSet);
     return elementsArr;
   }
 
@@ -78,21 +82,50 @@ export class Formula {
    * @private
    * @param {object} obj 
    * @param {string} element 
-   * @returns {object} 
+   * @returns {ElementCountPair[]} 
    * 
    * @memberof Formula
    */
-  private convertElementSetToElementsArr(
-    elementsArr: ElementCountPair[], 
-    elementSet: string): ElementCountPair[] {
-    const { element, count } = this.splitElementAndNumber(elementSet);
-    const ind = findIndex(elementsArr, elementSet => elementSet.element === element);
-    if (~ind) {
-      elementsArr[ind].count += count;
-    } else {
-      elementsArr.push({ element, count });
-    }
-    return elementsArr;
+  private convertElementSetToElementsArr(elementSet): (ElementCountPair)[]|null {
+    const elementsArr = reduce(
+      elementSet,
+      (countPairArray: (ElementCountPair)[], elementCountString: string) => {
+        const { element, count } = this.splitElementAndNumber(elementCountString);
+        const ind = findIndex(countPairArray, (elementPair) => {
+          if (elementPair) {
+            return elementPair.element === element;
+          }
+          return false;
+        });
+        if (~ind) {
+          countPairArray[ind].count += count;
+        } else {
+          const checkedElement = isElement(element) ? element : null;
+          countPairArray.push({ element: checkedElement, count });
+        }
+        return countPairArray;
+      },
+      [],
+    );
+    const isElementArrError = some(elementsArr, (countPair) => {
+      return countPair.element === null;
+    });
+    const checkedElementsArr = isElementArrError ? null : elementsArr;
+    return checkedElementsArr;
+    // elementsArr: (ElementCountPair|null)[], 
+    // elementSet: string): (ElementCountPair|null)[] {
+    // 
+    // const ind = findIndex(elementsArr, elementPair => elementPair.element === element);
+    // if (~ind ) {
+    //   elementsArr[ind].count += count;
+    // } else {
+    //   if (!isElement(element)) {
+    //     elementsArr.push(null);
+    //   } else {
+    //     elementsArr.push({ element, count });
+    //   };
+    // }
+    // return elementsArr;
   }
 
   /**

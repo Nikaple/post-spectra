@@ -98,7 +98,7 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
   }
 }
 
-export function highlightPeakData(str: string, type: HighlightType, errMsg?: string) {
+export function highlightPeakData(str: string, type?: HighlightType, errMsg?: string) {
   const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
   if (type === HighlightType.Red) {
     return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;

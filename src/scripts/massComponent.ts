@@ -13,6 +13,10 @@ export class MassComponent {
   private exactMass: number;
   // chemical formula of input molecule
   private inputFormula: string;
+  // formula instance generated from input
+  private formula: Formula;
+  // formula object literal
+  private formulaLiteral: ElementCountPair[];
   // chemical formula for output
   private outputFormula: string;
   // product yield of input molecule
@@ -69,12 +73,17 @@ export class MassComponent {
     this.inputFormula = $formula.value;
     this.productYield = Number($yield.value);
     this.mmol = Number($mmol.value);
+    this.formula = new Formula(this.inputFormula);
+    const parsedFormula = this.formula.parse();
+    if (!parsedFormula) {
+      this.renderError();
+      return;
+    }
+    this.formulaLiteral = parsedFormula;
 
     // calculation
-    const formula = new Formula(this.inputFormula);
-    const formulaLiteral = formula.parse();
     const activeIon = getActiveRadioButton($radios).value;
-    const actualIonInSpectrum = this.getActualIonInSpectrum(formula, activeIon);
+    const actualIonInSpectrum = this.getActualIonInSpectrum(this.formula, activeIon);
     this.outputFormula = parseLiteralToChemicalFormula(actualIonInSpectrum);
     const massStr = this.exactMass.toFixed(4);
     // render output
@@ -89,11 +98,16 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private render(): void {
+    if (this.inputFormula === '') {
+      return;
+    }
     if (isNaN(this.exactMass) || !this.exactMass) {
       this.renderError();
     } else {
       this.renderFormula(this.outputFormula);
-      this.renderYield(this.productYield, this.mmol);
+      if (this.productYield !== 0 && this.mmol !== 0) {
+        this.renderYield(this.productYield, this.mmol);
+      }
     }
   }
 
@@ -109,18 +123,17 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private getActualIonInSpectrum(formula: Formula, activeIon: string): ElementCountPair[] {
-    const formulaLiteral = formula.parse();
     if (!formula.isEmpty()) {
       this.exactMass = this.getExactMassOfMolecule(formula);
       // if activeIon is a chemical element, aka not 'None'
       const isElement = some(elementLookup, massObj => massObj.element === activeIon);
       if (isElement) {
-        const ionIndex = findIndex(formulaLiteral, elemCountPair => 
+        const ionIndex = findIndex(<ElementCountPair[]>this.formulaLiteral, elemCountPair => 
         elemCountPair.element === activeIon);
         if (~ionIndex) {
-          formulaLiteral[ionIndex].count += 1;
+          this.formulaLiteral[ionIndex].count += 1;
         } else {
-          formulaLiteral.push({
+          this.formulaLiteral.push({
             element: activeIon as Element,
             count: 1,
           });
@@ -129,7 +142,7 @@ export class MassComponent {
         this.addElementToExactMass(activeIon);
       }
     }
-    return formulaLiteral;
+    return this.formulaLiteral;
   }
 
   private substrateElectronFromExactMass() {
@@ -149,20 +162,21 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private getExactMassOfMolecule(formula: Formula): number {
-    const formulaLiteral = formula.parse();
-    const mass = reduce(formulaLiteral, (total, elem: ElementCountPair) => {
-      const currentElement = elem.element as Element;
-      const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);
-      // TODO: error handling
-      if (~lookupIndex) {
-        const currentMass = elementLookup[lookupIndex].mass;
-        total += currentMass * elem.count;
-        return total;
-      } else {
-        this.renderError();
-        return total;
-      }
-    },                  0);
+    const mass = reduce(
+      <ElementCountPair[]>this.formulaLiteral, 
+      (total, elem: ElementCountPair) => {
+        const currentElement = elem.element as Element;
+        const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);
+        if (~lookupIndex) {
+          const currentMass = elementLookup[lookupIndex].mass;
+          total += currentMass * elem.count;
+          return total;
+        } else {
+          this.renderError();
+          return total;
+        }
+      },
+      0);
     return mass;
   }
 
@@ -190,8 +204,10 @@ export class MassComponent {
    */
   private renderFormula(formula: string): void {
     const $newFormula = document.getElementById('newFormula') as HTMLDivElement;
+    const $hrmsData = document.getElementById('hrmsData') as HTMLInputElement;
+    const foundMass = $hrmsData.value === '' ? 'YOURDATA' : Number($hrmsData.value).toFixed(4);
     $newFormula.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for \
-      ${formula}: ${this.exactMass.toFixed(4)} found: YOURDATA`;
+      ${formula}: ${this.exactMass.toFixed(4)} found: ${foundMass}`;
     clearDOMElement('#massError');
   }
 

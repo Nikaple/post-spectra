@@ -1,3 +1,5 @@
+import { some } from 'lodash';
+
 // Chemical element dictionary
 export interface MassIndicator {
   element: Element;
@@ -90,87 +92,9 @@ export const elementLookup: MassIndicator[] = [
   { element: 'U', mass: 238.050786 },
 ];
 
-export type Element =
-  'H' |
-  'He' |
-  'Li' |
-  'Be' |
-  'B' |
-  'C' |
-  'N' |
-  'O' |
-  'F' |
-  'Ne' |
-  'Na' |
-  'Mg' |
-  'Al' |
-  'Si' |
-  'P' |
-  'S' |
-  'Cl' |
-  'Ar' |
-  'K' |
-  'Ca' |
-  'Sc' |
-  'Ti' |
-  'V' |
-  'Cr' |
-  'Mn' |
-  'Fe' |
-  'Co' |
-  'Ni' |
-  'Cu' |
-  'Zn' |
-  'Ga' |
-  'Ge' |
-  'As' |
-  'Se' |
-  'Br' |
-  'Kr' |
-  'Rb' |
-  'Sr' |
-  'Y' |
-  'Zr' |
-  'Nb' |
-  'Mo' |
-  'Ru' |
-  'Rh' |
-  'Pd' |
-  'Ag' |
-  'Cd' |
-  'In' |
-  'Sn' |
-  'Sb' |
-  'Te' |
-  'I' |
-  'Xe' |
-  'Cs' |
-  'Ba' |
-  'La' |
-  'Ce' |
-  'Pr' |
-  'Nd' |
-  'Sm' |
-  'Eu' |
-  'Gd' |
-  'Tb' |
-  'Dy' |
-  'Ho' |
-  'Er' |
-  'Tm' |
-  'Yb' |
-  'Lu' |
-  'Hf' |
-  'Ta' |
-  'W' |
-  'Re' |
-  'Os' |
-  'Ir' |
-  'Pt' |
-  'Au' |
-  'Hg' |
-  'Tl' |
-  'Pb' |
-  'Bi' |
-  'Th' |
-  'U';
+// tslint:disable-next-line:max-line-length
+export type Element = 'H'|'He'|'Li'|'Be'|'B'|'C'|'N'|'O'|'F'|'Ne'|'Na'|'Mg'|'Al'|'Si'|'P'|'S'|'Cl'|'Ar'|'K'|'Ca'|'Sc'|'Ti'|'V'|'Cr'|'Mn'|'Fe'|'Co'|'Ni'|'Cu'|'Zn'|'Ga'|'Ge'|'As'|'Se'|'Br'|'Kr'|'Rb'|'Sr'|'Y'|'Zr'|'Nb'|'Mo'|'Ru'|'Rh'|'Pd'|'Ag'|'Cd'|'In'|'Sn'|'Sb'|'Te'|'I'|'Xe'|'Cs'|'Ba'|'La'|'Ce'|'Pr'|'Nd'|'Sm'|'Eu'|'Gd'|'Tb'|'Dy'|'Ho'|'Er'|'Tm'|'Yb'|'Lu'|'Hf'|'Ta'|'W'|'Re'|'Os'|'Ir'|'Pt'|'Au'|'Hg'|'Tl'|'Pb'|'Bi'|'Th'|'U';
+
+export function isElement(element: string|null): boolean {
+  return some(elementLookup, massObj => massObj.element === element);
+}

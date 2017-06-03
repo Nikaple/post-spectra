@@ -92,8 +92,16 @@ export class C13Component {
       const peakStr = obj.peak;
       const currentSolventInfo = solventInfo[obj.meta.solvent];
       let type: HighlightType;
-      let errMsg: string = `自动移除的${deletedPeaks[index].length}个峰：\
-      ${deletedPeaks[index].toString()}。`;
+      let errMsg = '';
+      const highlightedData = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
+        ${currentSolventInfo.formattedString}) δ \
+        ${peakStr.join(', ')}`;
+      if (deletedPeaks[index].length !== 0) {
+        errMsg = `自动移除的${deletedPeaks[index].length}个峰：\
+        ${deletedPeaks[index].toString()}。`;
+      } else {
+        return highlightedData;
+      }
       if (deletedPeaks[index].length > currentSolventInfo.peaks) {
         type = HighlightType.Red;
         errMsg += `<br>而${currentSolventInfo.formattedString}是${currentSolventInfo.peaks}重峰`;
@@ -101,9 +109,7 @@ export class C13Component {
         type = HighlightType.Yellow;
       }
       return highlightPeakData(
-        `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
-        ${currentSolventInfo.formattedString}) δ \
-        ${peakStr.join(', ')}`,
+        highlightedData,
         type,
         errMsg,
         );
@@ -149,7 +155,7 @@ export class C13Component {
    */
   private roundMetadataFreq(freq: number): number {
     const decay = 4;
-    return round(freq * decay, -1);
+    return round(freq * decay, -1) / decay;
   }
 
   private setDataFromInput(): void {
