@@ -57,7 +57,15 @@
 -------------------------------------------------------
 
 ## Install locally
-安装[nodejs](https://nodejs.org)与[Git](https://git-scm.com/)之后，在命令行中执行：
+
+### 直接下载
+
+在当前页面靠近顶部的位置，找到Clone or download，点击Download ZIP，之后解压下载好的文件并打开index.html即可
+
+### Contribute
+
+After installing nodejs and Git, run:
+
 ```
 git clone https://github.com/Nikaple/chem-si-helper.git
 cd chem-si-helper
