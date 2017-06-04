@@ -5,12 +5,18 @@ import { strToPeaksArray,
 import { some, split, map, 
   fill, forEach, head, 
   tail, clone, reduce, 
-  every, indexOf, replace } from 'lodash';
+  every, indexOf, replace,
+  slice, join, chain,
+  compact } from 'lodash';
 import { solventInfo, minFreq, maxFreq } from './utils/constants';
 import { Nucleo, Multiplet, Metadata, H1Data,
-  H1RenderObj, handleNMRData, getDataArray, HighlightType, highlightPeakData,
+  H1RenderObj, handleNMRData, getDataArray,
+  HighlightType, highlightPeakData, isSinglePeak,
+  isMultiplePeak, isMultiplePeakWithCouplingConstant, isPeak,
 } from './utils/nmr';
 
+
+const peakRangePlaceholder = 'PEAKRANGE';
 
 export class H1Component {
 
@@ -32,7 +38,7 @@ export class H1Component {
     this.data = '';
     this.hightlightData = false;
     this.errMsg = {
-      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
+      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴。例如：',
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
@@ -46,9 +52,12 @@ export class H1Component {
    * @memberof H1Component
    */
   private init(): void {
+    const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
     const $peaks = document.getElementById('h1Peaks') as HTMLTextAreaElement;
-    $peaks.addEventListener('input', this.handle.bind(this));
-    $peaks.addEventListener('change', this.handle.bind(this));
+    forEach([$peaks, ...$checkboxes], (nd) => {
+      nd.addEventListener('input', this.handle.bind(this));
+      nd.addEventListener('change', this.handle.bind(this));
+    });
     this.handle();
   }
 
@@ -73,7 +82,7 @@ export class H1Component {
       return map(peakDatum, data => this.parseIndividualData(data));
     }) as H1Data[][];
     if (!peakDataObj) {
-      return ;
+      return;
     }
     const fixedPeakDataObj: H1Data[][] = map(peakDataObj, (peakDatum, index) => {
       const freq = (metadataArr as Metadata[])[index].freq;
@@ -172,35 +181,49 @@ export class H1Component {
    * @memberof H1Component
    */
   private stringifyPeakData(peakObj: H1Data): string {
+    if (!peakObj) {
+      return '';
+    }
+    let formattedPeak = '';
+    if (peakObj.peak !== peakRangePlaceholder) {
+      formattedPeak = (typeof peakObj.peak === 'string')
+      ? Number(peakObj.peak).toFixed(2)
+      : `${Number(peakObj.peak[0]).toFixed(2)} − \
+        ${Number(peakObj.peak[1]).toFixed(2)}`;
+    } else {
+      formattedPeak = peakRangePlaceholder;
+    }
+    const renderedPeak = peakObj.danger
+      ? highlightPeakData(
+        formattedPeak,
+        HighlightType.Red,
+        peakObj.errMsg,
+      )
+      : formattedPeak;
+    const renderedPeakType = peakObj.peakTypeError
+      ? highlightPeakData(
+        peakObj.peakType,
+        HighlightType.Red,
+        peakObj.errMsg,
+      )
+      : peakObj.peakType;
     if (peakObj.couplingConstants === null) {
-      if (peakObj.peak.length === 2) {
-        // for data similar to '7.10 - 6.68 (m, 1H)'
-        return `${peakObj.peak[0]} − ${peakObj.peak[1]} \
-        (${peakObj.peakType}, ${peakObj.hydrogenCount}H)`;
-      } else if (peakObj.danger === true) {
-        // for data similar to '7.15 (dd, J = 11.2, 2.4 Hz, 1H)'
-        const placeholder = this.hightlightData
-          ? highlightPeakData(
-            peakObj.peak as string,
-            HighlightType.Red,
-            peakObj.errMsg as string)
-          : peakObj.peak;
-        return `${placeholder} (${peakObj.peakType}, \
-        ${peakObj.hydrogenCount}H)`;
-      } else {
-        // for data similar to '2.30 (s, 3H)'
-        return `${peakObj.peak} (${peakObj.peakType}, ${peakObj.hydrogenCount}H)`;
-      }
+      // for peak object without J
+      return `${renderedPeak} \
+      (${renderedPeakType}, ${peakObj.hydrogenCount}H)`;
     } else {
       // for data similar to '10.15 (d, J = 6.2 Hz, 1H)'
-      const renderedCouplingConstants = peakObj.couplingConstants.toFixed(1);
+      const formattedCouplingConstant = chain(peakObj.couplingConstants)
+        .map(couplingConstant => couplingConstant.toFixed(1))
+        .join(', ')
+        .value();
       const renderedCouplingConstant = (this.hightlightData && peakObj.warning)
         ? highlightPeakData(
-          renderedCouplingConstants, 
+          formattedCouplingConstant, 
           HighlightType.Yellow,
           peakObj.errMsg as string)
-        : renderedCouplingConstants;
-      return `${peakObj.peak} (${peakObj.peakType}, <em>J</em> = \
+        : formattedCouplingConstant;
+      return `${renderedPeak} (${renderedPeakType}, <em>J</em> = \
       ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
@@ -221,25 +244,34 @@ export class H1Component {
    */
   private parseIndividualData(data: string): H1Data|void {
     const regexWithCoupling = 
-    /(\d+\.\d{2}) \((\w+), J = (\d+\.\d+)(?:, \d+\.\d+)?(?: Hz, (\d+)H\))/g;
-    const regexWithoutCoupling = /(\d+\.\d{2}( *[–−-] *\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+    /(\d+\.\d*) \((\w+), J = (\d+\.\d*)(?:, *)?(\d+\.\d*)?(?:, *)?(\d+\.\d*)? Hz, (\d+)H\)/g;
+    const regexWithoutCoupling = /(\d+\.\d*( *[–−-] *\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {
+      const couplingConstants = chain(couplingMatch)
+        .slice(3, 6)
+        .map(Number)
+        .compact()
+        .value();
       return {
         peak: couplingMatch[1],
         peakType: couplingMatch[2] as Multiplet,
-        couplingConstants: +couplingMatch[3],
-        hydrogenCount: +couplingMatch[4],
+        couplingConstants,
+        hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
       const peakArr = nonCouplingMatch[1].split(/ *[–−-] */g);
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
+      const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
+      const errMsg = danger ? '错误：多重峰化学位移区间应由低场向高场书写' : '';
       return {
         peak,
         peakType: nonCouplingMatch[3] as Multiplet,
         couplingConstants: null,
         hydrogenCount: +nonCouplingMatch[4],
+        danger,
+        errMsg,
       };
     } else {
       const errText = this.data.replace(data, `<span class="danger-text">${data}</span>`);
@@ -249,28 +281,71 @@ export class H1Component {
   }
 
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
+    if (!peakDatum) {
+      return peakDatum;
+    }
+    const $general = document.getElementById('generalMultiplet') as HTMLInputElement;
+    const $autoFixJ = document.getElementById('autoFixJ') as HTMLInputElement;
+    const isGeneral = !$general.checked;
+    const willFixJ = $autoFixJ.checked;
     const peakDatumCopy = clone(peakDatum);
-    // m & not range => error
-    if (peakDatumCopy.peakType === 'm') {
-      if (typeof peakDatumCopy.peak === 'string') {
-        peakDatumCopy.danger = true;
-        peakDatumCopy.errMsg = '错误：多重峰化学位移不是区间形式';
+    if (!isPeak(peakDatumCopy.peakType)) {
+      peakDatumCopy.peakTypeError = true;
+      peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰类型不存在`; 
+    } else {
+      if (isMultiplePeak(peakDatumCopy.peakType)) {
+        // peak type 'm' should have an range of peak
+        if (typeof peakDatumCopy.peak === 'string') {
+          peakDatumCopy.danger = true;
+          peakDatumCopy.errMsg = '错误：多重峰化学位移应为区间形式';
+        }
+        if (peakDatumCopy.couplingConstants !== null) {
+          // single peaks shouldn't have coupling constants
+          peakDatumCopy.warning = true;
+          peakDatumCopy.errMsg = `错误：多重峰不存在耦合常数`;
+        }
+      } else { // all peak types except 'm' should only have one peak value
+        if (typeof peakDatumCopy.peak !== 'string') {
+          peakDatumCopy.danger = true;
+          peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰化学位移应为单值`;
+        }
+        if (isSinglePeak(peakDatumCopy.peakType)) {
+          if (peakDatumCopy.couplingConstants !== null) {
+            // single peaks shouldn't have coupling constants
+            peakDatumCopy.peakTypeError = true;
+            peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰不存在耦合常数`;
+          }
+        } else {
+          if (isMultiplePeakWithCouplingConstant(peakDatumCopy.peakType, isGeneral)) {
+            // for all peaks with coupling constants
+            if (willFixJ) {
+              if (!peakDatumCopy.couplingConstants) {
+                // multiple peaks should have coupling constants
+                peakDatumCopy.peakTypeError = true;
+                peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰应有耦合常数`;
+              } else {
+                if (!every(peakDatumCopy.couplingConstants, this.isCouplingConstantValid)) {
+                  peakDatumCopy.couplingConstants = map(
+                    peakDatumCopy.couplingConstants,
+                    (couplingConstant) => {
+                      return this.roundCouplingConstant(couplingConstant, freq);
+                    });
+                  peakDatumCopy.warning = true;
+                  peakDatumCopy.errMsg = `原始数据： <em>J</em> = \
+                  ${peakDatumCopy.couplingConstants.toString()}`;
+                }
+              }
+            }
+          } else {
+            // treat other types of multiplet as m peak
+            peakDatumCopy.danger = true;
+            peakDatumCopy.peakType = 'm';
+            peakDatumCopy.peak = peakRangePlaceholder;
+            peakDatumCopy.couplingConstants = null;
+            peakDatumCopy.errMsg = `警告：已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
+          }
+        }
       }
-    } else if (peakDatumCopy.peakType === 'd' ||
-      peakDatumCopy.peakType === 't') {
-      if (!this.isCouplingConstantValid(<number>peakDatumCopy.couplingConstants, freq)) {
-        peakDatumCopy.couplingConstants = 
-        this.roundCouplingConstant(<number>peakDatumCopy.couplingConstants, freq);
-        peakDatumCopy.warning = true;
-        peakDatumCopy.errMsg = `原始数据： <em>J</em> = ${peakDatum.couplingConstants}`;
-      }
-    } else if (peakDatum.peakType !== 's') {
-      // treat other types of multiplet as m peak
-      peakDatumCopy.danger = true;
-      peakDatumCopy.peakType = 'm';
-      peakDatumCopy.peak = 'PEAKRANGE';
-      peakDatumCopy.couplingConstants = null;
-      peakDatumCopy.errMsg = `警告：已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
     }
     return peakDatumCopy;
   }
@@ -280,13 +355,17 @@ export class H1Component {
     return Math.round(MAGNIFICATION * couplingConstant / freq) * freq / MAGNIFICATION;
   }
 
-  private isCouplingConstantValid(couplingConstant: number, freq: number): boolean {
+  private isCouplingConstantValid(couplingConstant: number|null, freq: number): boolean {
+    if (!couplingConstant) {
+      return false;
+    }
     const MAGNIFICATION = 1000;
     return MAGNIFICATION * couplingConstant % freq === 0;
   }
 
   private setDataFromInput(): void {
-    this.data = (<HTMLInputElement>document.getElementById('h1Peaks')).value;
+    const $h1Peaks = <HTMLInputElement>document.getElementById('h1Peaks');
+    this.data = $h1Peaks.value;
   }
 
   private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {

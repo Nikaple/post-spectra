@@ -9,17 +9,20 @@ var ENV = process.env.npm_lifecycle_event;
 var isProd = ENV === 'build';
 
 module.exports = [
-  new webpack.ProgressPlugin(),
+    new webpack.ProgressPlugin(),
 
-  new HtmlWebpackPlugin({
-    template: 'public/index.html',
-    chunksSortMode: 'dependency'
-  }),
+    new HtmlWebpackPlugin({
+        template: 'public/index.html',
+        chunksSortMode: 'dependency'
+    }),
 
-  new ExtractTextPlugin({
-    filename: 'css/[name].[hash].css',
-    disable: !isProd
-  }),
+    new ExtractTextPlugin({
+        filename: 'css/[name].[hash].css',
+        disable: !isProd
+    }),
 
-  new CopyWebpackPlugin([{from: 'public'}])
+    new CopyWebpackPlugin([
+        { from: 'public' },
+        { from: '../README.md' }
+    ])
 ];

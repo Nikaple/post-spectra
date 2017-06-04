@@ -4,12 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Chemical SI Helper</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
 </head>
 
 <body>
     <div class="pure-form pure-form-stacked my-form">
         <h1><sup>1</sup>H NMR 数据处理</h1>
+        <fieldset class="radio-ion-field">
+            <input name="h1-checkbox" type="checkbox" id="generalMultiplet" class="radio-ion" checked>
+            <span class="radio-text">将非d,t,q峰当做多重峰处理</span>
+            <input name="h1-checkbox" type="checkbox" id="autoFixJ" class="radio-ion" checked>
+            <span class="radio-text">自动校正J值</span>
+        </fieldset>
         <textarea id="h1Peaks" rows="4" cols="55" height="100" placeholder="H1 peaks here..." class="input-textarea"></textarea>
         <div><span id="h1Output" class="output-text"></span></div>
         <div><span id="h1Error" class="output-text"></span></div>

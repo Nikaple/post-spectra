@@ -1,8 +1,8 @@
-import { map, head, tail, split, some } from 'lodash';
+import { map, head, tail, split, some, includes } from 'lodash';
 import { minFreq, maxFreq, solventInfo } from './constants';
 
 export type Nucleo = 'H'|'C'|'F'|'P';
-export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq';
+export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
 
 export enum HighlightType {
   Yellow = 0,
@@ -18,10 +18,11 @@ export interface Metadata {
 export interface H1Data {
   peak: string|string[];
   peakType: Multiplet;
-  couplingConstants: number|null;
+  couplingConstants: number[]|null;
   hydrogenCount: number;
   danger?: boolean; // highlight to red or not
   warning?: boolean; // highlight to yellow or not
+  peakTypeError?: boolean; // peakType error or not  
   errMsg?: string; // message on hover
 }
 
@@ -40,6 +41,58 @@ export interface C13RenderObj {
 interface ParsedData {
   peakData: string[][];
   metadataArr: (Metadata|null)[];
+}
+
+/**
+ * return if the peak is multiple peak (with coupling constant)
+ * 
+ * @export
+ * @param {Multiplet} peak 
+ * @param {boolean} [isGeneral] 
+ * @returns 
+ */
+export function isPeak(peak: Multiplet) {
+  const peakLookup: Multiplet[] = ['s', 'd', 't', 'q', 'dd', 'dt', 'td',
+    'ddd', 'ddt', 'dq', 'br', 'm'];
+  return includes(peakLookup, peak);
+}
+
+/**
+ * return if the peak is single peak or broad peak (no coupling constant)
+ * 
+ * @export
+ * @param {Multiplet} peak 
+ * @returns {boolean} 
+ */
+export function isSinglePeak(peak: Multiplet): boolean {
+  const singlePeakLookup: Multiplet[] = ['s', 'br'];
+  return includes(singlePeakLookup, peak);
+}
+
+/**
+ * return if the peak is multiple peak (with coupling constant)
+ * 
+ * @export
+ * @param {Multiplet} peak 
+ * @param {boolean} [isGeneral] 
+ * @returns 
+ */
+export function isMultiplePeakWithCouplingConstant(peak: Multiplet, isGeneral?: boolean) {
+  const multiplePeakLookup: Multiplet[] = isGeneral
+    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq']
+    : ['d', 't', 'q'];
+  return includes(multiplePeakLookup, peak);
+}
+
+/**
+ * return if the peak is multiple peak
+ * 
+ * @export
+ * @param {Multiplet} peak 
+ * @returns 
+ */
+export function isMultiplePeak(peak: Multiplet) {
+  return peak === 'm';
 }
 
 export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
@@ -222,3 +275,4 @@ function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
     || meta.freq > maxFreq / decay
     || !solventInfo[meta.solvent];
 }
+
