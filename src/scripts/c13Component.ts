@@ -1,6 +1,6 @@
 import { clearDOMElement, copyFormattedToClipboard } from './utils/utils';
 import { compact, difference, map, split, head,
-  tail, some, clone, remove, forEach, replace, round } from 'lodash';
+  tail, some, clone, remove, forEach, replace, round, join } from 'lodash';
 import {
   Nucleo, Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
@@ -98,7 +98,7 @@ export class C13Component {
         ${peakStr.join(', ')}`;
       if (deletedPeaks[index].length !== 0) {
         errMsg = `自动移除的${deletedPeaks[index].length}个峰：\
-        ${deletedPeaks[index].toString()}。`;
+        ${join(deletedPeaks[index], ', ')}。`;
       } else {
         return highlightedData;
       }

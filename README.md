@@ -60,12 +60,11 @@
 
 ### 直接下载
 
-在当前页面靠近顶部的位置，找到Clone or download，点击Download ZIP，之后解压下载好的文件并打开index.html即可
+在当前页面靠近顶部的位置，找到```Clone or download```，点击```Download ZIP```，之后解压下载好的文件并打开```index.html```即可
 
 ### Contribute
 
-After installing nodejs and Git, run:
-
+After installing [NodeJS](https://nodejs.org) and [Git](https://git-scm.com/), run:
 ```
 git clone https://github.com/Nikaple/chem-si-helper.git
 cd chem-si-helper
