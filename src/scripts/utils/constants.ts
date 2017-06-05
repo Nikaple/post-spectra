@@ -13,8 +13,8 @@ export const solventInfo = {
     residualRange: [76, 78],
     peaks: 3,
   },
-  ch3oh: {
-    formattedString: 'CH<sub>3</sub>OH',
+  cd3od: {
+    formattedString: 'CD<sub>3</sub>OD',
     residualRange: [48, 50],
     peaks: 7,
   },

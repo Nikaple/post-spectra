@@ -199,7 +199,7 @@ export class C13Component {
     clearDOMElement('#c13Output');
   }
 
-  public static getInstance(): C13Component {
+  public static get getInstance(): C13Component {
     if (!C13Component.instance) {
       return new C13Component();
     }

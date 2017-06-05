@@ -227,7 +227,7 @@ export class MassComponent {
     clearDOMElement('#massError');
   }
 
-  public static getInstance(): MassComponent {
+  public static get getInstance(): MassComponent {
     if (!MassComponent.instance) {
       return new MassComponent();
     }

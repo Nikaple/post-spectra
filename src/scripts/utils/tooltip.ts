@@ -40,7 +40,7 @@ export class Tooltip {
       elemPos.top - this.tooltip.offsetHeight - this.margin + pageYOffset) + 'px';
   }
 
-  public static getInstance(): Tooltip {
+  public static get getInstance(): Tooltip {
     if (!Tooltip.instance) {
       return new Tooltip();
     }

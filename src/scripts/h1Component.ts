@@ -20,13 +20,17 @@ const peakRangePlaceholder = 'PEAKRANGE';
 
 export class H1Component {
 
+  // data from input
   private data: string;
+  // highlight data or not
   private hightlightData: boolean;
+  // error message
   private errMsg: {
     dataErr: string;
     infoErr: string;
     peakErr: string;
   };
+  // instance for singleton
   private static instance: H1Component;
 
   /**
@@ -127,6 +131,31 @@ export class H1Component {
     this.renderOutput(`"${highlightedOutput}" has been copied to clipboard.`);
   }
 
+  /**
+   * render data from individual H1 render objects
+   * @example
+   * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H)'
+   * renderStrArray([{
+   *    meta: {
+   *      type: 'H',
+   *      solvent: 'cdcl3',
+   *      freq: 400,
+   *    }
+   *    peak: [
+   *      {
+   *        peak: 7.77,
+   *        peakType: 's',
+   *        couplingConstants: null,
+   *        hydrogenCount: 1,
+   *      }
+   *    ]
+   * }])
+   * @private
+   * @param {H1RenderObj[]} h1RenderObjs 
+   * @returns 
+   * 
+   * @memberof H1Component
+   */
   private renderStrArray(h1RenderObjs: H1RenderObj[]) {
     const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
       const peakStr = map(obj.peak, this.stringifyPeakData.bind(this));
@@ -193,39 +222,49 @@ export class H1Component {
     } else {
       formattedPeak = peakRangePlaceholder;
     }
-    const renderedPeak = peakObj.danger
-      ? highlightPeakData(
-        formattedPeak,
-        HighlightType.Red,
-        peakObj.errMsg,
-      )
-      : formattedPeak;
-    const renderedPeakType = peakObj.peakTypeError
-      ? highlightPeakData(
-        peakObj.peakType,
-        HighlightType.Red,
-        peakObj.errMsg,
-      )
-      : peakObj.peakType;
+    const renderedPeak = this.renderOnCondition(
+      peakObj.danger,
+      formattedPeak,
+      HighlightType.Red,
+      peakObj.errMsg,
+    );
+    const renderedPeakType = this.renderOnCondition(
+      peakObj.peakTypeError,
+      peakObj.peakType,
+      HighlightType.Red,
+      peakObj.errMsg,
+    );
     if (peakObj.couplingConstants === null) {
       // for peak object without J
       return `${renderedPeak} \
       (${renderedPeakType}, ${peakObj.hydrogenCount}H)`;
     } else {
-      // for data similar to '10.15 (d, J = 6.2 Hz, 1H)'
+      // for peak object with J
       const formattedCouplingConstant = chain(peakObj.couplingConstants)
         .map(couplingConstant => couplingConstant.toFixed(1))
         .join(', ')
         .value();
-      const renderedCouplingConstant = (this.hightlightData && peakObj.warning)
-        ? highlightPeakData(
-          formattedCouplingConstant, 
-          HighlightType.Yellow,
-          peakObj.errMsg as string)
-        : formattedCouplingConstant;
+      const renderedCouplingConstant = this.renderOnCondition(
+        this.hightlightData && peakObj.warning,
+        formattedCouplingConstant,
+        HighlightType.Yellow,
+        <string>peakObj.errMsg,
+      );
       return `${renderedPeak} (${renderedPeakType}, <em>J</em> = \
       ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
+  }
+
+  private renderOnCondition(
+    cond: boolean|undefined,
+    strToRender: string,
+    type: HighlightType,
+    errMsg: string|undefined,
+  ) : string {
+    if (cond) {
+      return highlightPeakData(strToRender, type, errMsg);
+    }
+    return strToRender;
   }
   
   /**
@@ -324,15 +363,25 @@ export class H1Component {
                 peakDatumCopy.peakTypeError = true;
                 peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰应有耦合常数`;
               } else {
-                if (!every(peakDatumCopy.couplingConstants, this.isCouplingConstantValid)) {
+                const isAllCouplingConstantValid = every(
+                  peakDatumCopy.couplingConstants,
+                  (couplingConstant) => {
+                    return this.isCouplingConstantValid(couplingConstant, freq);
+                  });
+                if (!isAllCouplingConstantValid) {
                   peakDatumCopy.couplingConstants = map(
                     peakDatumCopy.couplingConstants,
                     (couplingConstant) => {
                       return this.roundCouplingConstant(couplingConstant, freq);
                     });
                   peakDatumCopy.warning = true;
+                  const originalCouplingConstantsString = 
+                     chain(<number[]>peakDatum.couplingConstants)
+                    .map(data => data.toFixed(1))
+                    .join(', ')
+                    .value();
                   peakDatumCopy.errMsg = `原始数据： <em>J</em> = \
-                  ${peakDatumCopy.couplingConstants.toString()}`;
+                  ${originalCouplingConstantsString}`;
                 }
               }
             }
@@ -398,7 +447,7 @@ export class H1Component {
     clearDOMElement('#h1Output');
   }
 
-  public static getInstance(): H1Component {
+  public static get getInstance(): H1Component {
     if (!H1Component.instance) {
       return new H1Component();
     }
