@@ -12,18 +12,21 @@ import { solventInfo, minFreq, maxFreq } from './utils/constants';
 import { Nucleo, Multiplet, Metadata, H1Data,
   H1RenderObj, handleNMRData, getDataArray,
   HighlightType, highlightPeakData, isSinglePeak,
-  isMultiplePeak, isMultiplePeakWithCouplingConstant, isPeak,
+  isMultiplePeak, isMultiplePeakWithCouplingConstant,
+  isPeak, ComponentData,
 } from './utils/nmr';
-
+import { RenderComponent } from "./renderComponent";
 
 const peakRangePlaceholder = 'PEAKRANGE';
 
 export class H1Component {
 
   // data from input
-  private data: string;
+  private inputtedData: string;
+  // data that match '1H NMR: ....'
+  private matchedData: string[]|null;
   // highlight data or not
-  private hightlightData: boolean;
+  private willHighlightData: boolean;
   // error message
   private errMsg: {
     dataErr: string;
@@ -38,9 +41,9 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  constructor() {
-    this.data = '';
-    this.hightlightData = false;
+  private constructor() {
+    this.inputtedData = '';
+    this.willHighlightData = false;
     this.errMsg = {
       dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴。例如：',
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
@@ -79,6 +82,7 @@ export class H1Component {
     if (parsedData === null) {
       return;
     }
+    this.matchedData = getDataArray(this.inputtedData, 'H');
     const peakData = parsedData.peakData;
     const metadataArr = <Metadata[]>parsedData.metadataArr;
     // individual peak data objects
@@ -104,7 +108,7 @@ export class H1Component {
    */
   private reset() {
     this.setDataFromInput();
-    this.hightlightData = false;
+    this.willHighlightData = false;
   } 
 
   /**
@@ -125,17 +129,22 @@ export class H1Component {
       h1RenderObjs.push(obj);
     });
     // copy unhighlighted string to clipboard
-    copyFormattedToClipboard(this.renderStrArray(h1RenderObjs));
-    this.hightlightData = true;
-    const highlightedOutput = this.renderStrArray(h1RenderObjs);
-    this.renderOutput(`"${highlightedOutput}" has been copied to clipboard.`);
+    // copyFormattedToClipboard(this.renderStrArrays(h1RenderObjs));
+    // this.willHighlightData = true;
+    // const highlightedOutput = this.renderStrArrays(h1RenderObjs);
+    // this.renderOutput(`"${highlightedOutput}"已被复制到剪贴板`);
+    const input = this.matchedData as string[];
+    const outputPlain = this.renderStrArrays(h1RenderObjs);
+    this.willHighlightData = true;
+    const outputRich = this.renderStrArrays(h1RenderObjs);
+    RenderComponent.getInstance.acquireData({ input, outputPlain, outputRich});
   }
 
   /**
    * render data from individual H1 render objects
    * @example
    * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H)'
-   * renderStrArray([{
+   * renderStrArrays([{
    *    meta: {
    *      type: 'H',
    *      solvent: 'cdcl3',
@@ -156,21 +165,30 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private renderStrArray(h1RenderObjs: H1RenderObj[]) {
+  private renderStrArrays(h1RenderObjs: H1RenderObj[]): string[] {
     const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
-      const peakStr = map(obj.peak, this.stringifyPeakData.bind(this));
-      return `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
-      ${solventInfo[obj.meta.solvent].formattedString}) δ `
-       + peakStr.join(', ');
+      const headStr = `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
+      ${solventInfo[obj.meta.solvent].formattedString}) δ `;
+      const peakStr = chain(obj.peak)
+        .map(this.stringifyPeakData.bind(this))
+        .join(', ')
+        .value();
+      return headStr + peakStr;
     });
-    const data = getDataArray(this.data, 'H') || [];
-    let output = this.data;
-    forEach(data, (peakStr, index) => {
-      output = this.hightlightData
-        ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
-        : replace(output, data[index], formattedPeakStrings[index]);
+    const output = map(formattedPeakStrings, str => {
+      return this.willHighlightData
+        ? `<strong>${str}</strong>`
+        : str;
     });
-    return output.replace(/\n/g, '<br>');
+    return output;
+    // const outputRich = formattedPeakStrings;
+    // return { input, outputPlain, outputRich };
+    // forEach(input, (peakStr, index) => {
+    //   output = this.willHighlightData
+    //     ? replace(output, input[index], `<strong>${formattedPeakStrings[index]}</strong>`)
+    //     : replace(output, input[index], formattedPeakStrings[index]);
+    // });
+    // return output.replace(/\n/g, '<br>');
   }
 
   /**
@@ -244,7 +262,7 @@ export class H1Component {
         .join(', ')
         .value();
       const renderedCouplingConstant = this.renderOnCondition(
-        this.hightlightData && peakObj.warning,
+        this.willHighlightData && peakObj.warning,
         formattedCouplingConstant,
         HighlightType.Yellow,
         <string>peakObj.errMsg,
@@ -312,7 +330,7 @@ export class H1Component {
         errMsg,
       };
     } else {
-      const errText = this.data.replace(data, `<span class="danger-text">${data}</span>`);
+      const errText = this.inputtedData.replace(data, `<span class="danger-text">${data}</span>`);
       this.renderError(this.errMsg.peakErr + errText);
       return;
     }
@@ -413,7 +431,7 @@ export class H1Component {
 
   private setDataFromInput(): void {
     const $h1Peaks = <HTMLInputElement>document.getElementById('h1Peaks');
-    this.data = $h1Peaks.value;
+    this.inputtedData = $h1Peaks.value;
   }
 
   private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
@@ -427,7 +445,7 @@ export class H1Component {
 
   private renderOutput(str): void {
     this.clearH1DOMElements();
-    if (this.data !== '') {
+    if (this.inputtedData !== '') {
       const $output = document.getElementById('h1Output') as HTMLDivElement;
       $output.innerHTML = str;
     }
@@ -435,7 +453,7 @@ export class H1Component {
 
   private renderError(msg): void {
     this.clearH1DOMElements();
-    if (this.data !== '') {
+    if (this.inputtedData !== '') {
       const $error = document.getElementById('h1Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }

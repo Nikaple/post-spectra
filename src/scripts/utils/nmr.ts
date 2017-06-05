@@ -3,6 +3,7 @@ import { minFreq, maxFreq, solventInfo } from './constants';
 
 export type Nucleo = 'H'|'C'|'F'|'P';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
+export type C13Data = string|null;
 
 export enum HighlightType {
   Yellow = 0,
@@ -26,11 +27,14 @@ export interface H1Data {
   errMsg?: string; // message on hover
 }
 
-export type C13Data = string|null;
-
 export interface H1RenderObj {
   meta: Metadata;
   peak: H1Data[];
+}
+
+interface ParsedData {
+  peakData: string[][];
+  metadataArr: (Metadata|null)[];
 }
 
 export interface C13RenderObj {
@@ -38,9 +42,10 @@ export interface C13RenderObj {
   peak: C13Data[];
 }
 
-interface ParsedData {
-  peakData: string[][];
-  metadataArr: (Metadata|null)[];
+export interface ComponentData {
+  input: string[];
+  outputPlain: string[];
+  outputRich: string[];
 }
 
 /**
@@ -116,19 +121,19 @@ export function highlightPeakData(str: string, type?: HighlightType, errMsg?: st
 }
 
 export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
-  const dataArr = getDataArray(thisArg.data, type);
+  const dataArr = getDataArray(thisArg.inputtedData, type);
   if (dataArr === null) {
     thisArg.renderError(thisArg.errMsg.dataErr);
     return null;
   }
-  const splittedDataArr: string[][] = splitDataArray(dataArr);
-  const describerArr: string[] = getDescriberArray(splittedDataArr);
+  thisArg.matchData = splitDataArray(dataArr);
+  const describerArr: string[] = getDescriberArray(thisArg.matchData);
   const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr);
-  const peakData: string[][] = getPeakDataArray(splittedDataArr);
   if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
     thisArg.renderError(thisArg.errMsg.infoErr);
     return null;
   }
+  const peakData: string[][] = getPeakDataArray(thisArg.matchData);
   return { peakData, metadataArr };
 }
 
@@ -259,7 +264,7 @@ function getMetadataFromDescriber(describerArr: string[]): (Metadata|null)[] {
   return describerArr.map((datum) => {
     const nucleo = /\d+(\w)(?: NMR)/.exec(datum);
     const freq = /(\d+) MHz/.exec(datum);
-    const solvent = /, (\w+)(:?-d6)?\)/i.exec(datum);
+    const solvent = /(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i.exec(datum);
     if (!nucleo || !freq || !solvent) {
       return null;
     }
@@ -281,7 +286,7 @@ function getMetadataFromDescriber(describerArr: string[]): (Metadata|null)[] {
  */
 function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
   if (!meta) {
-    return false;
+    return true;
   }
   // decrease the frequency to 1/4 when calculating 13C NMR
   const decay = type === 'H' ? 1 : 4;

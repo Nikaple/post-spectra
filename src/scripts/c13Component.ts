@@ -9,18 +9,22 @@ import {
 import { solventInfo } from './utils/constants'; 
 
 export class C13Component {
-  private data: string;
-  private hightlightData: boolean;
+  // data from input
+  private inputtedData: string;
+  // highlight data or not
+  private willHighlightData: boolean;
+  // error message
   private errMsg: {
     dataErr: string;
     infoErr: string;
     peakErr: string;
   };
+  // instance for singleton
   private static instance: C13Component;
 
-  constructor() {
-    this.data = '';
-    this.hightlightData = false;
+  private constructor() {
+    this.inputtedData = '';
+    this.willHighlightData = false;
     this.errMsg = {
       dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
@@ -69,7 +73,7 @@ export class C13Component {
    */
   private reset() {
     this.setDataFromInput();
-    this.hightlightData = false;
+    this.willHighlightData = false;
   } 
   
   private render(metadataArr: Metadata[], peakData: C13Data[][], deletedPeaks: C13Data[][]) {
@@ -82,9 +86,9 @@ export class C13Component {
     });
     // copy unhighlighted string to clipboard
     copyFormattedToClipboard(this.renderStrArray(c13RenderObjs, deletedPeaks));
-    this.hightlightData = true;
+    this.willHighlightData = true;
     const highlightedOutput = this.renderStrArray(c13RenderObjs, deletedPeaks);
-    this.renderOutput(`"${highlightedOutput}" has been copied to clipboard.`);
+    this.renderOutput(`"${highlightedOutput}"已被复制到剪贴板`);
   }
 
   private renderStrArray(c13RenderObjs: C13RenderObj[], deletedPeaks: C13Data[][]) {
@@ -114,10 +118,10 @@ export class C13Component {
         errMsg,
         );
     });
-    const data = getDataArray(this.data, 'C') || [];
-    let output = this.data;
+    const data = getDataArray(this.inputtedData, 'C') || [];
+    let output = this.inputtedData;
     forEach(data, (peakStr, index) => {
-      output = this.hightlightData
+      output = this.willHighlightData
         ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
         : replace(output, data[index], formattedPeakStrings[index]);
     });
@@ -159,7 +163,7 @@ export class C13Component {
   }
 
   private setDataFromInput(): void {
-    this.data = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
+    this.inputtedData = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
   }
 
   private fixC13Peaks(peak: C13Data): C13Data {
@@ -180,7 +184,7 @@ export class C13Component {
 
   private renderOutput(str): void {
     this.clearC13DOMElements();
-    if (this.data !== '') {
+    if (this.inputtedData !== '') {
       const $output = document.getElementById('c13Output') as HTMLDivElement;
       $output.innerHTML = str;
     }
@@ -188,7 +192,7 @@ export class C13Component {
 
   private renderError(msg): void {
     this.clearC13DOMElements();
-    if (this.data !== '') {
+    if (this.inputtedData !== '') {
       const $error = document.getElementById('c13Error') as HTMLDivElement;
       $error.innerHTML = msg;
     }

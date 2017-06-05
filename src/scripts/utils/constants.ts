@@ -5,22 +5,22 @@ export const massOfElectron = 0.000549;
 export const solventInfo = {
   dmso: {
     formattedString: 'DMSO-<em>d</em><sub>6</sub>',
-    residualRange: [38.5, 40.5],
+    residualRange: [38.7, 40.3],
     peaks: 7,
   },
   cdcl3: {
     formattedString: 'CDCl<sub>3</sub>',
-    residualRange: [76, 78],
+    residualRange: [76.3, 77.7],
     peaks: 3,
   },
   cd3od: {
     formattedString: 'CD<sub>3</sub>OD',
-    residualRange: [48, 50],
+    residualRange: [48.3, 49.7],
     peaks: 7,
   },
   c6d6: {
     formattedString: 'C<sub>6</sub>D<sub>6</sub>',
-    residualRange: [127, 129],
+    residualRange: [127.3, 128.7],
     peaks: 3,
   },
   d2o: {

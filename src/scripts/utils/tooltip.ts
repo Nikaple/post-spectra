@@ -5,19 +5,19 @@ export class Tooltip {
   private tooltip: HTMLDivElement;
   private static instance: Tooltip;
 
-  constructor(delay = 50, margin = 10) {
+  private constructor(delay = 50, margin = 10) {
     this.delay = delay;
     this.margin = margin;
     this.tooltip = document.createElement('div');
     this.init();
   }
 
-  init() {
+  private init() {
     document.addEventListener('mouseover', this.onMouseOver.bind(this));
     document.addEventListener('mouseout', this.onMouseOut.bind(this));
   }
 
-  onMouseOver(e: MouseEvent): void {
+  private onMouseOver(e: MouseEvent): void {
     const target = e.target as HTMLElement;
     if (!target.hasAttribute('data-tooltip')) return;
     this.tooltip.className = 'tooltip';
@@ -26,13 +26,13 @@ export class Tooltip {
     this.getPosition(e.target as HTMLElement);
   }
 
-  onMouseOut(e: MouseEvent): void {
+  private onMouseOut(e: MouseEvent): void {
     const target = e.target as HTMLElement;
     if (!target.hasAttribute('data-tooltip')) return;
     document.body.removeChild(this.tooltip);
   }
 
-  getPosition(elem: HTMLElement) {
+  private getPosition(elem: HTMLElement) {
     const elemPos: ClientRect = elem.getBoundingClientRect();
     this.tooltip.style.left = Math.round(
       elemPos.left + (elem.offsetWidth - this.tooltip.offsetWidth) / 2) + 'px';

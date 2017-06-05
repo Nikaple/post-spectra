@@ -1,6 +1,7 @@
 import '../styles/base.scss';
 
 import { Tooltip } from './utils/tooltip';
+import { RenderComponent } from './renderComponent';
 import { H1Component } from './h1Component';
 import { C13Component } from './c13Component';
 import { MassComponent } from './massComponent';
@@ -25,6 +26,8 @@ import { MassComponent } from './massComponent';
 
 // All components are implemented in singleton pattern
 Tooltip.getInstance;
+RenderComponent.getInstance;
 H1Component.getInstance;
 C13Component.getInstance;
 MassComponent.getInstance;
+RenderComponent.getInstance.render();
