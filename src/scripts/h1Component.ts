@@ -81,10 +81,10 @@ export class H1Component {
     }
     const peakData = parsedData.peakData;
     const metadataArr = <Metadata[]>parsedData.metadataArr;
-    // individual peak data objects,
-    const peakDataObj = map(peakData, (peakDatum) => {
-      return map(peakDatum, data => this.parseIndividualData(data));
-    }) as H1Data[][];
+    // individual peak data objects
+    const peakDataObj = map(peakData, peakDatum =>
+      map(peakDatum, data => this.parsePeakData(data)),
+    ) as H1Data[][];
     if (!peakDataObj) {
       return;
     }
@@ -217,8 +217,7 @@ export class H1Component {
     if (peakObj.peak !== peakRangePlaceholder) {
       formattedPeak = (typeof peakObj.peak === 'string')
       ? Number(peakObj.peak).toFixed(2)
-      : `${Number(peakObj.peak[0]).toFixed(2)} − \
-        ${Number(peakObj.peak[1]).toFixed(2)}`;
+      : `${Number(peakObj.peak[0]).toFixed(2)}–${Number(peakObj.peak[1]).toFixed(2)}`;
     } else {
       formattedPeak = peakRangePlaceholder;
     }
@@ -281,10 +280,10 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private parseIndividualData(data: string): H1Data|void {
-    const regexWithCoupling = 
-    /(\d+\.\d*) \((\w+), J = (\d+\.\d*)(?:, *)?(\d+\.\d*)?(?:, *)?(\d+\.\d*)? Hz, (\d+)H\)/g;
-    const regexWithoutCoupling = /(\d+\.\d*( *[–−-] *\d+\.\d{2})?) \((\w+), (?:(\d+)H\))/g;
+  private parsePeakData(data: string): H1Data|void {
+    // tslint:disable-next-line:max-line-length
+    const regexWithCoupling = /(\d+\.?\d*) \((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *Hz *, *(\d+)H\)/g;
+    const regexWithoutCoupling = /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
     if (couplingMatch) {

@@ -7,15 +7,13 @@ import { MassComponent } from './massComponent';
 
 // mock data
 
-// import { mockH1Data } from './utils/mock';
+// import { mockH1Data, mockC13Data, mockMassData } from './utils/mock';
 // const $h1Peaks = <HTMLInputElement>document.getElementById('h1Peaks');
 // $h1Peaks.value = mockH1Data;
 
-// import { mockC13Data } from './utils/mock';
 // const $c13Peaks = <HTMLInputElement>document.getElementById('c13Peaks');
 // $c13Peaks.value = mockC13Data;
 
-// import { mockMassData } from './utils/mock';
 // const $formula = document.getElementById('formula') as HTMLInputElement;
 // const $hrmsData = document.getElementById('hrmsData') as HTMLInputElement;
 // const $yield = document.getElementById('yield') as HTMLInputElement;

@@ -95,6 +95,26 @@ export function isMultiplePeak(peak: Multiplet) {
   return peak === 'm';
 }
 
+
+/**
+ * highlight peak data with tooltip
+ * 
+ * @export
+ * @param {string} str 
+ * @param {HighlightType} [type] 
+ * @param {string} [errMsg] 
+ * @returns 
+ */
+export function highlightPeakData(str: string, type?: HighlightType, errMsg?: string) {
+  const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
+  if (type === HighlightType.Red) {
+    return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;
+  } else if (type === HighlightType.Yellow) {
+    return `<span class="warning-text" ${tooltipAttribute}">${str}</span>`;
+  }
+  return str;
+}
+
 export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
   const dataArr = getDataArray(thisArg.data, type);
   if (dataArr === null) {
@@ -129,17 +149,21 @@ export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
  */
 export function getDataArray(data: string, type: Nucleo): string[]|null {
   let nmrReg: RegExp;
+  // 1H NMR data starts with 13C NMR and ends with ',.;，。；' or white space
+  const h1Reg = /1H NMR.+\dH\) ?[ ,.;，。；]+?/g;
+  // 13C NMR data starts with 13C NMR and ends with ',.;，。；' or white space
+  const c13Reg = /13C NMR.+MHz.+?\d+\.?\d*(\(\d*\))? ?[ ,.;，。；](?! *\d\.?\d*)/g;
   switch (type) {
-    case 'H': { // 1H NMR data starts with 13C NMR and ends with '.' or ';' or white space
-      nmrReg = /1H NMR.+\)[\.;]/g;
+    case 'H': { 
+      nmrReg = h1Reg;
       break;
     }
-    case 'C': { // 13C NMR data starts with 13C NMR and ends with '.' or ';' or white space
-      nmrReg = /13C NMR.+?\.[\w\d]+?[\.;]/g;
+    case 'C': { 
+      nmrReg = c13Reg;
       break;
     }
     default: { // falls back to 1H NMR on default
-      nmrReg = /1H NMR.+\)[\.;]/g;
+      nmrReg = h1Reg;
       break;
     }
   }
@@ -149,16 +173,6 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
   } else { // cut the '.' or ';' or white space at the end
     return map(match, str => str.substr(0, str.length - 1));
   }
-}
-
-export function highlightPeakData(str: string, type?: HighlightType, errMsg?: string) {
-  const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
-  if (type === HighlightType.Red) {
-    return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;
-  } else if (type === HighlightType.Yellow) {
-    return `<span class="warning-text" ${tooltipAttribute}">${str}</span>`;
-  }
-  return str;
 }
 
 /**
@@ -180,7 +194,7 @@ export function highlightPeakData(str: string, type?: HighlightType, errMsg?: st
  */
 function splitDataArray(dataArr: string[]) {
   return map(dataArr, (datum) => {
-    return split(datum, / δ |, *(?!\d+\.\d+\s+\w)(?=\d{1,3}\.\d{1,3})/g);
+    return split(datum, / *δ *=? *(?:\(ppm\))?|, *(?!\d+\.\d+\s+\w)(?=\d+\.\d*)/g);
   });
 }
 
@@ -275,4 +289,3 @@ function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
     || meta.freq > maxFreq / decay
     || !solventInfo[meta.solvent];
 }
-
