@@ -5,7 +5,7 @@ import { C13Component } from './c13Component';
 import { HrmsComponent } from './hrmsComponent';
 import { ComponentData } from './utils/constants';
 import { copyFormattedStrToClipboard, clearDOMElement, highlightData } from './utils/utils';
-import { HighlightType } from "./utils/nmr";
+import { HighlightType } from './utils/nmr';
 
 export class AppComponent {
   // data from input

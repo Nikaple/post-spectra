@@ -24,7 +24,7 @@ export class HrmsComponent {
 
   handle(): ComponentData {
     return {
-      input: ['1'],
+      input: ['randomshit'],
       outputPlain: ['1'],
       outputRich: ['1'],
     };

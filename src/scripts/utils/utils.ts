@@ -2,6 +2,7 @@ import { reduce } from 'lodash';
 import { ElementCountPair } from './formula';
 import { HighlightType } from './nmr';
 
+
 /**
  * get the active radio button from a set of radio buttons
  * 
