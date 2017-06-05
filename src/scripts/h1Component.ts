@@ -1,21 +1,16 @@
-import { strToPeaksArray,
-  getActiveRadioButton,
-  clearDOMElement,
-  copyFormattedToClipboard } from './utils/utils';
+import { clearDOMElement,
+  highlightData } from './utils/utils';
 import { some, split, map, 
-  fill, forEach, head, 
-  tail, clone, reduce, 
-  every, indexOf, replace,
+  forEach, clone, every, replace,
   slice, join, chain,
   compact } from 'lodash';
-import { solventInfo, minFreq, maxFreq } from './utils/constants';
-import { Nucleo, Multiplet, Metadata, H1Data,
+import { solventInfo, ComponentData } from './utils/constants';
+import { Multiplet, Metadata, H1Data,
   H1RenderObj, handleNMRData, getDataArray,
-  HighlightType, highlightPeakData, isSinglePeak,
+  HighlightType, isSinglePeak,
   isMultiplePeak, isMultiplePeakWithCouplingConstant,
-  isPeak, ComponentData,
+  isPeak,
 } from './utils/nmr';
-import { RenderComponent } from "./renderComponent";
 
 const peakRangePlaceholder = 'PEAKRANGE';
 
@@ -45,27 +40,10 @@ export class H1Component {
     this.inputtedData = '';
     this.willHighlightData = false;
     this.errMsg = {
-      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴。例如：',
+      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
-    this.init();
-  }
-
-  /**
-   * initialize listeners
-   * @returns {void}
-   * 
-   * @memberof H1Component
-   */
-  private init(): void {
-    const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
-    const $peaks = document.getElementById('h1Peaks') as HTMLTextAreaElement;
-    forEach([$peaks, ...$checkboxes], (nd) => {
-      nd.addEventListener('input', this.handle.bind(this));
-      nd.addEventListener('change', this.handle.bind(this));
-    });
-    this.handle();
   }
 
   /**
@@ -76,27 +54,30 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private handle(): void {
+  public handle(): ComponentData|null {
     this.reset();
     const parsedData = handleNMRData('H', this);
     if (parsedData === null) {
-      return;
+      return null;
     }
     this.matchedData = getDataArray(this.inputtedData, 'H');
     const peakData = parsedData.peakData;
     const metadataArr = <Metadata[]>parsedData.metadataArr;
     // individual peak data objects
-    const peakDataObj = map(peakData, peakDatum =>
+    const peakDataObjs = map(peakData, peakDatum =>
       map(peakDatum, data => this.parsePeakData(data)),
     ) as H1Data[][];
-    if (!peakDataObj) {
-      return;
+    const isPeakDataObjContainNull = some(peakDataObjs, (peakDataObj) => {
+      return some(peakDataObj, h1data => h1data === null);
+    });
+    if (isPeakDataObjContainNull) {
+      return null;
     }
-    const fixedPeakDataObj: H1Data[][] = map(peakDataObj, (peakDatum, index) => {
+    const fixedPeakDataObj: H1Data[][] = map(peakDataObjs, (peakDatum, index) => {
       const freq = (metadataArr as Metadata[])[index].freq;
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    this.render(metadataArr, fixedPeakDataObj);
+    return this.render(metadataArr, fixedPeakDataObj);
   }
   
   /**
@@ -120,7 +101,7 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private render(metadataArr: Metadata[], peakDataObj: H1Data[][]): void {
+  private render(metadataArr: Metadata[], peakDataObj: H1Data[][]): ComponentData {
     const h1RenderObjs:  H1RenderObj[] = [];
     forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as H1RenderObj;
@@ -128,16 +109,11 @@ export class H1Component {
       obj.peak = peakDataObj[index];
       h1RenderObjs.push(obj);
     });
-    // copy unhighlighted string to clipboard
-    // copyFormattedToClipboard(this.renderStrArrays(h1RenderObjs));
-    // this.willHighlightData = true;
-    // const highlightedOutput = this.renderStrArrays(h1RenderObjs);
-    // this.renderOutput(`"${highlightedOutput}"已被复制到剪贴板`);
     const input = this.matchedData as string[];
     const outputPlain = this.renderStrArrays(h1RenderObjs);
     this.willHighlightData = true;
     const outputRich = this.renderStrArrays(h1RenderObjs);
-    RenderComponent.getInstance.acquireData({ input, outputPlain, outputRich});
+    return { input, outputPlain, outputRich };
   }
 
   /**
@@ -175,20 +151,12 @@ export class H1Component {
         .value();
       return headStr + peakStr;
     });
-    const output = map(formattedPeakStrings, str => {
+    const output = map(formattedPeakStrings, (str) => {
       return this.willHighlightData
         ? `<strong>${str}</strong>`
         : str;
     });
     return output;
-    // const outputRich = formattedPeakStrings;
-    // return { input, outputPlain, outputRich };
-    // forEach(input, (peakStr, index) => {
-    //   output = this.willHighlightData
-    //     ? replace(output, input[index], `<strong>${formattedPeakStrings[index]}</strong>`)
-    //     : replace(output, input[index], formattedPeakStrings[index]);
-    // });
-    // return output.replace(/\n/g, '<br>');
   }
 
   /**
@@ -239,36 +207,36 @@ export class H1Component {
     } else {
       formattedPeak = peakRangePlaceholder;
     }
-    const renderedPeak = this.renderOnCondition(
+    const rendeDangerPeak = this.renderOnCondition(
       peakObj.danger,
       formattedPeak,
-      HighlightType.Red,
+      HighlightType.Danger,
       peakObj.errMsg,
     );
-    const renderedPeakType = this.renderOnCondition(
+    const rendeDangerPeakType = this.renderOnCondition(
       peakObj.peakTypeError,
       peakObj.peakType,
-      HighlightType.Red,
+      HighlightType.Danger,
       peakObj.errMsg,
     );
     if (peakObj.couplingConstants === null) {
       // for peak object without J
-      return `${renderedPeak} \
-      (${renderedPeakType}, ${peakObj.hydrogenCount}H)`;
+      return `${rendeDangerPeak} \
+      (${rendeDangerPeakType}, ${peakObj.hydrogenCount}H)`;
     } else {
       // for peak object with J
       const formattedCouplingConstant = chain(peakObj.couplingConstants)
         .map(couplingConstant => couplingConstant.toFixed(1))
         .join(', ')
         .value();
-      const renderedCouplingConstant = this.renderOnCondition(
+      const rendeDangerCouplingConstant = this.renderOnCondition(
         this.willHighlightData && peakObj.warning,
         formattedCouplingConstant,
-        HighlightType.Yellow,
+        HighlightType.Warning,
         <string>peakObj.errMsg,
       );
-      return `${renderedPeak} (${renderedPeakType}, <em>J</em> = \
-      ${renderedCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
+      return `${rendeDangerPeak} (${rendeDangerPeakType}, <em>J</em> = \
+      ${rendeDangerCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
 
@@ -279,7 +247,7 @@ export class H1Component {
     errMsg: string|undefined,
   ) : string {
     if (cond) {
-      return highlightPeakData(strToRender, type, errMsg);
+      return highlightData(strToRender, type, errMsg);
     }
     return strToRender;
   }
@@ -298,9 +266,9 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private parsePeakData(data: string): H1Data|void {
+  private parsePeakData(data: string): H1Data|null {
     // tslint:disable-next-line:max-line-length
-    const regexWithCoupling = /(\d+\.?\d*) \((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *Hz *, *(\d+)H\)/g;
+    const regexWithCoupling = /(\d+\.?\d*) *\((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *Hz *, *(\d+)H\)/g;
     const regexWithoutCoupling = /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/g;
     const couplingMatch = regexWithCoupling.exec(data);
     const nonCouplingMatch = regexWithoutCoupling.exec(data);
@@ -330,9 +298,11 @@ export class H1Component {
         errMsg,
       };
     } else {
-      const errText = this.inputtedData.replace(data, `<span class="danger-text">${data}</span>`);
+      const errText = this.inputtedData
+        .replace(data, `<span class="danger-text">${data}</span>`)
+        .replace(/\n/g, `<br>`);
       this.renderError(this.errMsg.peakErr + errText);
-      return;
+      return null;
     }
   }
 
@@ -430,38 +400,25 @@ export class H1Component {
   }
 
   private setDataFromInput(): void {
-    const $h1Peaks = <HTMLInputElement>document.getElementById('h1Peaks');
+    const $h1Peaks = <HTMLInputElement>document.getElementById('input');
     this.inputtedData = $h1Peaks.value;
   }
 
   private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
-    if (type === HighlightType.Red) {
+    if (type === HighlightType.Danger) {
       return `<span class="danger-text" data-tooltip="${errMsg}">${str}</span>`;
-    } else if (type === HighlightType.Yellow) {
+    } else if (type === HighlightType.Warning) {
       return `<span class="warning-text" data-tooltip="${errMsg}">${str}</span>`;
     }
     return str;
   }
 
-  private renderOutput(str): void {
-    this.clearH1DOMElements();
-    if (this.inputtedData !== '') {
-      const $output = document.getElementById('h1Output') as HTMLDivElement;
-      $output.innerHTML = str;
-    }
-  }
-
   private renderError(msg): void {
-    this.clearH1DOMElements();
+    clearDOMElement('#output');
     if (this.inputtedData !== '') {
-      const $error = document.getElementById('h1Error') as HTMLDivElement;
+      const $error = document.getElementById('error') as HTMLDivElement;
       $error.innerHTML = msg;
     }
-  }
-
-  private clearH1DOMElements(): void {
-    clearDOMElement('#h1Error');
-    clearDOMElement('#h1Output');
   }
 
   public static get getInstance(): H1Component {

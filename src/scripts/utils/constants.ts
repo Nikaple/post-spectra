@@ -33,3 +33,9 @@ export const solventInfo = {
 // max and min of NMR frequency
 export const maxFreq = 800;
 export const minFreq = 100;
+
+export interface ComponentData {
+  input: string[];
+  outputPlain: string[];
+  outputRich: string[];
+}

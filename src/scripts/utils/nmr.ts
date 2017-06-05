@@ -6,8 +6,9 @@ export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
 export type C13Data = string|null;
 
 export enum HighlightType {
-  Yellow = 0,
-  Red,
+  Danger = 0,
+  Warning,
+  Success,
 }
 
 export interface Metadata {
@@ -42,11 +43,6 @@ export interface C13RenderObj {
   peak: C13Data[];
 }
 
-export interface ComponentData {
-  input: string[];
-  outputPlain: string[];
-  outputRich: string[];
-}
 
 /**
  * return if the peak is multiple peak (with coupling constant)
@@ -98,26 +94,6 @@ export function isMultiplePeakWithCouplingConstant(peak: Multiplet, isGeneral?: 
  */
 export function isMultiplePeak(peak: Multiplet) {
   return peak === 'm';
-}
-
-
-/**
- * highlight peak data with tooltip
- * 
- * @export
- * @param {string} str 
- * @param {HighlightType} [type] 
- * @param {string} [errMsg] 
- * @returns 
- */
-export function highlightPeakData(str: string, type?: HighlightType, errMsg?: string) {
-  const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
-  if (type === HighlightType.Red) {
-    return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;
-  } else if (type === HighlightType.Yellow) {
-    return `<span class="warning-text" ${tooltipAttribute}">${str}</span>`;
-  }
-  return str;
 }
 
 export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {

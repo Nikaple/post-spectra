@@ -1,5 +1,5 @@
 
-import { RenderComponent } from "./renderComponent";
+import { ComponentData } from './utils/constants';
 
 export class HrmsComponent {
 
@@ -10,7 +10,7 @@ export class HrmsComponent {
   // error message
   private errMsg: {
 
-  }
+  };
   // instance for singleton
   private static instance: HrmsComponent;
 
@@ -22,17 +22,12 @@ export class HrmsComponent {
 
   }
 
-  handle() {
-
-  }
-
-  emit() {
-    const emittedData = {
+  handle(): ComponentData {
+    return {
       input: ['1'],
-      outputPlain: ['2'],
-      outputRich: ['3'],
-    }
-    RenderComponent.getInstance.acquireData(emittedData);
+      outputPlain: ['1'],
+      outputRich: ['1'],
+    };
   }
 
   public static get getInstance(): HrmsComponent {

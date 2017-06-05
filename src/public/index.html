@@ -10,20 +10,16 @@
 
 <body>
     <div class="pure-form pure-form-stacked my-form">
-        <h1><sup>1</sup>H NMR 数据处理</h1>
+        <h1>NMR 数据处理</h1>
         <fieldset class="radio-ion-field">
             <input name="h1-checkbox" type="checkbox" id="generalMultiplet" class="radio-ion" checked>
             <span class="radio-text">将非d,t,q峰当做多重峰处理</span>
             <input name="h1-checkbox" type="checkbox" id="autoFixJ" class="radio-ion" checked>
             <span class="radio-text">自动校正J值</span>
         </fieldset>
-        <textarea id="h1Peaks" rows="4" cols="55" height="100" placeholder="H1 peaks here..." class="input-textarea"></textarea>
-        <div><span id="h1Output" class="output-text"></span></div>
-        <div><span id="h1Error" class="output-text"></span></div>
-        <h1><sup>13</sup>C NMR 数据处理</h1>
-        <textarea id="c13Peaks" rows="4" cols="55" height="100" placeholder="C13 peaks here..." class="input-textarea"></textarea>
-        <div><span id="c13Output" class="output-text"></span></div>
-        <div><span id="c13Error" class="output-text"></span></div>
+        <textarea id="input" rows="14" cols="55" height="100" placeholder="H1 peaks here..." class="input-textarea">1H NMR (600 MHz, CDCl3): δ = 8.50 (s, 1H), 8.44 (d, J = 2.1 Hz, 1H). 13C NMR (100 MHz, CDCl3): δ = 146.4.</textarea>
+        <div><span id="output" class="output-text"></span></div>
+        <div><span id="error" class="output-text"></span></div>
         <h1>高分辨数据处理</h1>
         <fieldset class="radio-ion-field">
             <input type="radio" name="ion" value="None" class="radio-ion" checked>

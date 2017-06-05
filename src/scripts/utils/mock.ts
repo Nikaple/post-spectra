@@ -4,11 +4,11 @@ const mockDataTail = '.';
 
 const mockH1Head = [
   '1H NMR (400 MHz, cdcl3) δ ',
-  '1H NMR (600 MHz, cdcl3) δ ',
+  '1H NMR (400 MHz, cdcl3) δ ',
   '1H NMR (400 MHz, dmso) δ ',
-  '1H NMR (500 MHz, dmso) δ ',
+  '1H NMR (400 MHz, dmso) δ ',
   '1H NMR (400 MHz, cd3od) δ ',
-  '1H NMR (300 MHz, c6d6) δ ',
+  '1H NMR (400 MHz, c6d6) δ ',
   '1H NMR (400 MHz, d2o) δ ',
 ];
 const mockH1Peak = [

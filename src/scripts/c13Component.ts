@@ -1,16 +1,16 @@
-import { clearDOMElement, copyFormattedToClipboard } from './utils/utils';
-import { compact, difference, map, split, head,
-  tail, some, clone, remove, forEach, replace, round, join } from 'lodash';
+import { clearDOMElement, highlightData } from './utils/utils';
+import { map, split, clone, remove, forEach, round, join } from 'lodash';
 import {
-  Nucleo, Metadata, C13Data, handleNMRData,
+  Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
-  highlightPeakData,
 } from './utils/nmr';
-import { solventInfo } from './utils/constants'; 
+import { solventInfo, ComponentData } from './utils/constants'; 
 
 export class C13Component {
   // data from input
   private inputtedData: string;
+  // data that match '13C NMR: ....'
+  private matchedData: string[]|null;
   // highlight data or not
   private willHighlightData: boolean;
   // error message
@@ -30,22 +30,15 @@ export class C13Component {
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
-    this.init();
   }
 
-  private init() {
-    const $c13peaks = document.getElementById('c13Peaks') as HTMLTextAreaElement;
-    $c13peaks.addEventListener('input', this.handle.bind(this));
-    $c13peaks.addEventListener('change', this.handle.bind(this));
-    this.handle();
-  }
-
-  private handle() {
+  public handle(): ComponentData|null {
     this.reset();
     const parsedData = handleNMRData('C', this);
     if (parsedData === null) {
-      return;
+      return null;
     }
+    this.matchedData = getDataArray(this.inputtedData, 'C');
     const peakData = parsedData.peakData as C13Data[][];
     const originalMetadataArr = parsedData.metadataArr as Metadata[];
     const metadataArr = map(originalMetadataArr, (metadata) => {
@@ -55,13 +48,13 @@ export class C13Component {
     const peakDataCopy = clone(peakData);
     const deletedPeaks = map(peakDataCopy, (peakDatum, index) => {
       return remove(peakDatum, (peak) => {
-        return this.isPeakRedundant(peak, metadataArr[index].solvent);
+        return this.isPeakDangerundant(peak, metadataArr[index].solvent);
       });
     });
     const fixedPeakData = map(peakDataCopy, (peakDatum) => {
       return map(peakDatum, this.fixC13Peaks);
     });
-    this.render(metadataArr, fixedPeakData, deletedPeaks);
+    return this.render(metadataArr, fixedPeakData, deletedPeaks);
   }
   
   /**
@@ -76,7 +69,11 @@ export class C13Component {
     this.willHighlightData = false;
   } 
   
-  private render(metadataArr: Metadata[], peakData: C13Data[][], deletedPeaks: C13Data[][]) {
+  private render(
+    metadataArr: Metadata[],
+    peakData: C13Data[][],
+    deletedPeaks: C13Data[][],
+  ): ComponentData {
     const c13RenderObjs: C13RenderObj[] = [];
     forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as C13RenderObj;
@@ -84,22 +81,22 @@ export class C13Component {
       obj.peak = peakData[index];
       c13RenderObjs.push(obj);
     });
-    // copy unhighlighted string to clipboard
-    copyFormattedToClipboard(this.renderStrArray(c13RenderObjs, deletedPeaks));
+    const input = this.matchedData as string[];
+    const outputPlain = this.renderStrArrays(c13RenderObjs, deletedPeaks);
     this.willHighlightData = true;
-    const highlightedOutput = this.renderStrArray(c13RenderObjs, deletedPeaks);
-    this.renderOutput(`"${highlightedOutput}"已被复制到剪贴板`);
+    const outputRich = this.renderStrArrays(c13RenderObjs, deletedPeaks);
+    return { input, outputPlain, outputRich };
   }
 
-  private renderStrArray(c13RenderObjs: C13RenderObj[], deletedPeaks: C13Data[][]) {
+  private renderStrArrays(c13RenderObjs: C13RenderObj[], deletedPeaks: C13Data[][]) {
     const formattedPeakStrings = map(c13RenderObjs, (obj: C13RenderObj, index) => {
-      const peakStr = obj.peak;
       const currentSolventInfo = solventInfo[obj.meta.solvent];
+      const headStr = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
+        ${currentSolventInfo.formattedString}) δ `;
+      const peakStr = obj.peak.join(', ');
+      const highlightedData = headStr + peakStr;
       let type: HighlightType;
       let errMsg = '';
-      const highlightedData = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
-        ${currentSolventInfo.formattedString}) δ \
-        ${peakStr.join(', ')}`;
       if (deletedPeaks[index].length !== 0) {
         errMsg = `自动移除的${deletedPeaks[index].length}个峰：\
         ${join(deletedPeaks[index], ', ')}。`;
@@ -107,25 +104,23 @@ export class C13Component {
         return highlightedData;
       }
       if (deletedPeaks[index].length > currentSolventInfo.peaks) {
-        type = HighlightType.Red;
+        type = HighlightType.Danger;
         errMsg += `<br>而${currentSolventInfo.formattedString}是${currentSolventInfo.peaks}重峰`;
       } else {
-        type = HighlightType.Yellow;
+        type = HighlightType.Warning;
       }
-      return highlightPeakData(
+      return highlightData(
         highlightedData,
         type,
         errMsg,
         );
     });
-    const data = getDataArray(this.inputtedData, 'C') || [];
-    let output = this.inputtedData;
-    forEach(data, (peakStr, index) => {
-      output = this.willHighlightData
-        ? replace(output, data[index], `<strong>${formattedPeakStrings[index]}</strong>`)
-        : replace(output, data[index], formattedPeakStrings[index]);
+    const output = map(formattedPeakStrings, (str) => {
+      return this.willHighlightData
+        ? `<strong>${str}</strong>`
+        : str;
     });
-    return output.replace(/\n/g, '<br>');
+    return output;
   }
 
   /**
@@ -163,44 +158,31 @@ export class C13Component {
   }
 
   private setDataFromInput(): void {
-    this.inputtedData = (<HTMLInputElement>document.getElementById('c13Peaks')).value;
+    this.inputtedData = (<HTMLInputElement>document.getElementById('input')).value;
   }
 
   private fixC13Peaks(peak: C13Data): C13Data {
     if (peak === null) {
-      return highlightPeakData('数据有误', HighlightType.Red);
+      return highlightData('数据有误', HighlightType.Danger);
     }
     if (isNaN(Number(peak))) {
-      return highlightPeakData(peak, HighlightType.Red, '数据有误');
+      return highlightData(peak, HighlightType.Danger, '数据有误');
     }
     return <C13Data>Number(peak).toFixed(1);
   }
 
-  private isPeakRedundant(peak, solvent: string) {
+  private isPeakDangerundant(peak, solvent: string) {
     const solventPeakRange: number[] = solventInfo[solvent].residualRange;
     const peakValue = Number(peak);
     return peakValue >= solventPeakRange[0] && peakValue <= solventPeakRange[1];
   }
 
-  private renderOutput(str): void {
-    this.clearC13DOMElements();
-    if (this.inputtedData !== '') {
-      const $output = document.getElementById('c13Output') as HTMLDivElement;
-      $output.innerHTML = str;
-    }
-  }
-
   private renderError(msg): void {
-    this.clearC13DOMElements();
+    clearDOMElement('#output');
     if (this.inputtedData !== '') {
-      const $error = document.getElementById('c13Error') as HTMLDivElement;
+      const $error = document.getElementById('error') as HTMLDivElement;
       $error.innerHTML = msg;
     }
-  }
-
-  private clearC13DOMElements(): void {
-    clearDOMElement('#c13Error');
-    clearDOMElement('#c13Output');
   }
 
   public static get getInstance(): C13Component {

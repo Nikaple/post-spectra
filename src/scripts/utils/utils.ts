@@ -1,5 +1,6 @@
 import { reduce } from 'lodash';
 import { ElementCountPair } from './formula';
+import { HighlightType } from './nmr';
 
 /**
  * get the active radio button from a set of radio buttons
@@ -38,12 +39,33 @@ export function clearDOMElement(selector: string): void {
 }
 
 
+/**
+ * highlight peak data with tooltip
+ * 
+ * @export
+ * @param {string} str 
+ * @param {HighlightType} [type] 
+ * @param {string} [errMsg] 
+ * @returns 
+ */
+export function highlightData(str: string, type?: HighlightType, errMsg?: string) {
+  const tooltipAttribute = errMsg ? `data-tooltip="${errMsg}"` : '';
+  if (type === HighlightType.Danger) {
+    return `<span class="danger-text" ${tooltipAttribute}>${str}</span>`;
+  } else if (type === HighlightType.Warning) {
+    return `<span class="warning-text" ${tooltipAttribute}">${str}</span>`;
+  } else if (type === HighlightType.Success) {
+    return `<span class="success-text">${str}</span>`;
+  }
+  return str;
+}
+
 // convert the mestrenova data to peaks array
 export function strToPeaksArray(str) {
   return str.match(/(\d{1,3}\.\d+)/g);
 }
 
-export function copyFormattedToClipboard(str) {
+export function copyFormattedStrToClipboard(str) {
   document.addEventListener('copy', copy);
   document.execCommand('copy');
   document.removeEventListener('copy', copy);
