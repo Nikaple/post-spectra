@@ -60,7 +60,7 @@ export const nmrRegex = {
     // tslint:disable-next-line:max-line-length
     /(\d+\.?\d*) *\((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *(?:Hz)? *, *(\d+)H\)/,
     // tslint:disable-next-line:max-line-length
-    /(\d{1,2}\.\d{2}) \((\w+), J = (\d{1,2}\.\d)(?:, )?(\d{1,2}\.\d)?(?:, )?(\d{1,2}\.\d)? Hz, (\d{1,2})H\)/,
+    /(\d{1,2}\.\d{2}) \((\w+), *J *= *(\d{1,2}\.\d)(?:, *)?(\d{1,2}\.\d)?(?:, *)?(\d{1,2}\.\d)? Hz, (\d{1,2})H\)/,
   ],
   h1PeakWithoutCouplingConstants: [
     /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/,

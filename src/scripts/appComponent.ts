@@ -57,9 +57,9 @@ export class AppComponent {
    * @memberof AppComponent
    */
   private handle() {
-    const h1Data = H1Component.getInstance.handle();
     const c13Data = C13Component.getInstance.handle();
     const hrmsData = HrmsComponent.getInstance.handle();
+    const h1Data = H1Component.getInstance.handle();
     const componentsData = compact([h1Data, c13Data, hrmsData]);
     if (componentsData.length === 0) {
       return;
