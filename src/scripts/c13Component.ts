@@ -4,7 +4,7 @@ import {
   Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
 } from './utils/nmr';
-import { solventInfo, ComponentData } from './utils/constants'; 
+import { ComponentData, solventsInfo } from './utils/constants'; 
 
 export class C13Component {
   // data from input
@@ -19,6 +19,12 @@ export class C13Component {
     infoErr: string;
     peakErr: string;
   };
+  private domElements: {
+    $strict: HTMLInputElement;
+    $error: HTMLDivElement;
+  };
+  // strict mode or not
+  private isStrict: boolean;
   // instance for singleton
   private static instance: C13Component;
 
@@ -30,28 +36,32 @@ export class C13Component {
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
+    this.domElements = {
+      $error: document.getElementById('error') as HTMLDivElement,
+      $strict: document.getElementById('strict') as HTMLInputElement,
+    };
+    this.isStrict = this.domElements.$strict.checked;
   }
 
   public handle(): ComponentData|null {
     this.reset();
-    const parsedData = handleNMRData('C', this);
+    const parsedData = handleNMRData('C', this, this.isStrict);
     if (parsedData === null) {
       return null;
     }
-    this.matchedData = getDataArray(this.inputtedData, 'C');
-    const peakData = parsedData.peakData as C13Data[][];
-    const originalMetadataArr = parsedData.metadataArr as Metadata[];
-    const metadataArr = map(originalMetadataArr, (metadata) => {
+    const peakData: C13Data[][] = parsedData.peakData as C13Data[][];
+    const originalMetadataArr: Metadata[] = parsedData.metadataArr as Metadata[];
+    const metadataArr: Metadata[] = map(originalMetadataArr, (metadata) => {
       metadata.freq = this.roundMetadataFreq(metadata.freq);
       return metadata;
     });
-    const peakDataCopy = clone(peakData);
-    const deletedPeaks = map(peakDataCopy, (peakDatum, index) => {
+    const peakDataCopy: C13Data[][] = clone(peakData);
+    const deletedPeaks: C13Data[][] = map(peakDataCopy, (peakDatum, index) => {
       return remove(peakDatum, (peak) => {
-        return this.isPeakDangerundant(peak, metadataArr[index].solvent);
+        return this.isPeakRedundant(peak, metadataArr[index].solvent);
       });
     });
-    const fixedPeakData = map(peakDataCopy, (peakDatum) => {
+    const fixedPeakData: C13Data[][] = map(peakDataCopy, (peakDatum) => {
       return map(peakDatum, this.fixC13Peaks);
     });
     return this.render(metadataArr, fixedPeakData, deletedPeaks);
@@ -69,6 +79,17 @@ export class C13Component {
     this.willHighlightData = false;
   } 
   
+  /**
+   * Returns the string object to render
+   * 
+   * @private
+   * @param {Metadata[]} metadataArr 
+   * @param {C13Data[][]} peakData 
+   * @param {C13Data[][]} deletedPeaks 
+   * @returns {ComponentData} 
+   * 
+   * @memberof C13Component
+   */
   private render(
     metadataArr: Metadata[],
     peakData: C13Data[][],
@@ -90,11 +111,12 @@ export class C13Component {
 
   private renderStrArrays(c13RenderObjs: C13RenderObj[], deletedPeaks: C13Data[][]) {
     const formattedPeakStrings = map(c13RenderObjs, (obj: C13RenderObj, index) => {
-      const currentSolventInfo = solventInfo[obj.meta.solvent];
+      const currentSolventInfo = solventsInfo[obj.meta.solvent];
       const headStr = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
         ${currentSolventInfo.formattedString}) δ `;
       const peakStr = obj.peak.join(', ');
-      const highlightedData = headStr + peakStr;
+      const tailStr = '.';
+      const highlightedData = headStr + peakStr + tailStr;
       let type: HighlightType;
       let errMsg = '';
       if (deletedPeaks[index].length !== 0) {
@@ -140,7 +162,7 @@ export class C13Component {
    */
   private stringifyMetadata(metadata: Metadata) {
     return `<sup>13</sup>C NMR (${metadata.freq} MHz, \
-      ${solventInfo[metadata.solvent].formattedString}) δ `;
+      ${solventsInfo[metadata.solvent].formattedString}) δ `;
   }
 
   /**
@@ -171,17 +193,16 @@ export class C13Component {
     return <C13Data>Number(peak).toFixed(1);
   }
 
-  private isPeakDangerundant(peak, solvent: string) {
-    const solventPeakRange: number[] = solventInfo[solvent].residualRange;
+  private isPeakRedundant(peak: C13Data, solvent: string) {
+    const solventPeakRange: number[] = solventsInfo[solvent].residualRange;
     const peakValue = Number(peak);
     return peakValue >= solventPeakRange[0] && peakValue <= solventPeakRange[1];
   }
 
-  private renderError(msg): void {
+  private renderError(msg: string): void {
     clearDOMElement('#output');
     if (this.inputtedData !== '') {
-      const $error = document.getElementById('error') as HTMLDivElement;
-      $error.innerHTML = msg;
+      this.domElements.$error.innerHTML = msg;
     }
   }
 

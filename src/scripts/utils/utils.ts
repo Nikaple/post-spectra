@@ -62,11 +62,11 @@ export function highlightData(str: string, type?: HighlightType, errMsg?: string
 }
 
 // convert the mestrenova data to peaks array
-export function strToPeaksArray(str) {
+export function strToPeaksArray(str: string) {
   return str.match(/(\d{1,3}\.\d+)/g);
 }
 
-export function copyFormattedStrToClipboard(str) {
+export function copyFormattedStrToClipboard(str: string) {
   document.addEventListener('copy', copy);
   document.execCommand('copy');
   document.removeEventListener('copy', copy);

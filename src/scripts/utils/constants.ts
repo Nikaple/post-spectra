@@ -1,8 +1,19 @@
 // exact mass of electron
 export const massOfElectron = 0.000549;
 
+// solvent info implementation
+export interface SolventInfo {
+  formattedString: string;
+  residualRange: number[];
+  peaks: number;
+}
+
+export interface SolventsInfo {
+  [key: string]: SolventInfo;
+}
+
 // available solvents
-export const solventInfo = {
+export const solventsInfo: SolventsInfo = {
   dmso: {
     formattedString: 'DMSO-<em>d</em><sub>6</sub>',
     residualRange: [38.7, 40.3],

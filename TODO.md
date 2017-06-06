@@ -9,3 +9,5 @@ H1, C13, Mass Component passes the value of :
 3. Highlighted replacement 
 
 Then the render component tookover, and render the values to screen.  
+
+### Regex should be built with new RegExp() with constants.

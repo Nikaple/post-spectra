@@ -149,7 +149,7 @@ export class MassComponent {
     this.exactMass -= massOfElectron;
   }
 
-  private addElementToExactMass(element) {
+  private addElementToExactMass(element: string) {
     this.exactMass += find(elementLookup, massObj => massObj.element === element).mass;
   }
   /**

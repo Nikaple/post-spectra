@@ -4,7 +4,7 @@
         "target": "es5",
         "importHelpers": true,
         "noImplicitReturns": true,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "noImplicitThis": true,
         "strictNullChecks": true,
         "moduleResolution": "node",

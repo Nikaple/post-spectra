@@ -86,7 +86,7 @@ export class Formula {
    * 
    * @memberof Formula
    */
-  private convertElementSetToElementsArr(elementSet): (ElementCountPair)[]|null {
+  private convertElementSetToElementsArr(elementSet: RegExpMatchArray): (ElementCountPair)[]|null {
     const elementsArr = reduce(
       elementSet,
       (countPairArray: (ElementCountPair)[], elementCountString: string) => {

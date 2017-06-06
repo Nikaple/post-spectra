@@ -1,5 +1,5 @@
-import { map, head, tail, split, some, includes } from 'lodash';
-import { minFreq, maxFreq, solventInfo } from './constants';
+import { map, head, tail, split, some, includes, trimEnd, chain } from 'lodash';
+import { minFreq, maxFreq, solventsInfo } from './constants';
 
 export type Nucleo = 'H'|'C'|'F'|'P';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
@@ -43,13 +43,36 @@ export interface C13RenderObj {
   peak: C13Data[];
 }
 
+// 0: not strict mode
+// 1: strict mode
+export const nmrRegex = {
+  h1Reg: [/1H NMR(.+?\dH\) *[ .;，。；]|.+\dH\) *, *)/g,
+    /1H NMR.+?(\dH\)[.;])/g],
+  c13Reg: [/13C NMR.+MHz.+?\d+\.?\d*(\(\d*\))? ?[ ,.;，。；](?! *\d\.?\d*)/g,
+    /13C NMR.+?MHz.+?\d{1,3}\.\d{1,2}(\(\d\))?[.;]/g],
+  splitData: [/:? *δ *=? *(?:\(ppm\))?| *[,，] *(?!\d+\.\d+\s+\w)(?=\d+\.\d*)/,
+    /:? δ(?: \(ppm\))?(?: ?= )?|, *(?=\d{1,3}\.\d{1,2})/],
+  nucleo: [/\d+(\w)(?: NMR)/, /\d{1,2}([A-Z])(?: NMR)/],
+  freq: [/(\d+) *MHz/, /(\d{2,3}) MHz/],
+  solvent: [/(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i,
+    /(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i],
+  h1PeakWithCouplingConstants: [
+    // tslint:disable-next-line:max-line-length
+    /(\d+\.?\d*) *\((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *(?:Hz)? *, *(\d+)H\)/,
+    // tslint:disable-next-line:max-line-length
+    /(\d{1,2}\.\d{2}) \((\w+), J = (\d{1,2}\.\d)(?:, )?(\d{1,2}\.\d)?(?:, )?(\d{1,2}\.\d)? Hz, (\d{1,2})H\)/,
+  ],
+  h1PeakWithoutCouplingConstants: [
+    /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/,
+    /(\d{1,2}\.\d{2}( ?[–−-] ?\d{1,2}\.\d{2})?) \((\w+), (\d{1,2})H\)/,
+  ],
+};
 
 /**
- * return if the peak is multiple peak (with coupling constant)
+ * return if the peak is peak
  * 
  * @export
- * @param {Multiplet} peak 
- * @param {boolean} [isGeneral] 
+ * @param {Multiplet} peak
  * @returns 
  */
 export function isPeak(peak: Multiplet) {
@@ -96,20 +119,20 @@ export function isMultiplePeak(peak: Multiplet) {
   return peak === 'm';
 }
 
-export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
-  const dataArr = getDataArray(thisArg.inputtedData, type);
-  if (dataArr === null) {
+export function handleNMRData(type: Nucleo, thisArg: any, isStrict: boolean): ParsedData | null {
+  thisArg.matchedData = getDataArray(thisArg.inputtedData, type, isStrict);
+  if (thisArg.matchedData === null) {
     thisArg.renderError(thisArg.errMsg.dataErr);
     return null;
   }
-  thisArg.matchData = splitDataArray(dataArr);
-  const describerArr: string[] = getDescriberArray(thisArg.matchData);
-  const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr);
+  const splittedDataArray = splitDataArray(thisArg.matchedData, isStrict);
+  const describerArr: string[] = getDescriberArray(splittedDataArray);
+  const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr, isStrict);
   if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
     thisArg.renderError(thisArg.errMsg.infoErr);
     return null;
   }
-  const peakData: string[][] = getPeakDataArray(thisArg.matchData);
+  const peakData: string[][] = getPeakDataArray(splittedDataArray);
   return { peakData, metadataArr };
 }
 
@@ -128,32 +151,27 @@ export function handleNMRData(type: Nucleo, thisArg): ParsedData | null {
  * @param {Nucleo} type 
  * @returns {(string[]|null)} data array of individual NMR data
  */
-export function getDataArray(data: string, type: Nucleo): string[]|null {
+export function getDataArray(data: string, type: Nucleo, isStrict: boolean): string[]|null {
   let nmrReg: RegExp;
-  // 1H NMR data starts with 13C NMR and ends with ',.;，。；' or white space
-  const h1Reg = /1H NMR.+\dH\) ?[ ,.;，。；]+?/g;
-  // 13C NMR data starts with 13C NMR and ends with ',.;，。；' or white space
-  const c13Reg = /13C NMR.+MHz.+?\d+\.?\d*(\(\d*\))? ?[ ,.;，。；](?! *\d\.?\d*)/g;
   switch (type) {
     case 'H': { 
-      nmrReg = h1Reg;
+      nmrReg = nmrRegex.h1Reg[Number(isStrict)];
       break;
     }
     case 'C': { 
-      nmrReg = c13Reg;
+      nmrReg = nmrRegex.c13Reg[Number(isStrict)];
       break;
     }
     default: { // falls back to 1H NMR on default
-      nmrReg = h1Reg;
+      nmrReg = nmrRegex.h1Reg[Number(isStrict)];
       break;
     }
   }
   const match = data.match(nmrReg);
   if (match === null) {
     return null;
-  } else { // cut the '.' or ';' or white space at the end
-    return map(match, str => str.substr(0, str.length - 1));
   }
+  return match;
 }
 
 /**
@@ -173,9 +191,10 @@ export function getDataArray(data: string, type: Nucleo): string[]|null {
  * @param {string[]} dataArr 
  * @returns 
  */
-function splitDataArray(dataArr: string[]) {
-  return map(dataArr, (datum) => {
-    return split(datum, / *δ *=? *(?:\(ppm\))?|, *(?!\d+\.\d+\s+\w)(?=\d+\.\d*)/g);
+function splitDataArray(dataArr: string[], isStrict: boolean) {
+  const trimmedData = map(dataArr, datum => trimEnd(datum, ' ,.; ，。；'));
+  return map(trimmedData, (datum) => {
+    return split(datum, nmrRegex.splitData[Number(isStrict)]);
   });
 }
 
@@ -196,7 +215,7 @@ function splitDataArray(dataArr: string[]) {
  * @param {any} splittedDataArr 
  * @returns 
  */
-function getDescriberArray(splittedDataArr): string[] {
+function getDescriberArray(splittedDataArr: string[][]): string[] {
   return map(splittedDataArr, head);
 }
 
@@ -222,7 +241,7 @@ function getDescriberArray(splittedDataArr): string[] {
  * @param {any} splittedDataArr 
  * @returns {string[][]} 
  */
-function getPeakDataArray(splittedDataArr): string[][] {
+function getPeakDataArray(splittedDataArr: string[][]): string[][] {
   return map(splittedDataArr, tail);
 }
 
@@ -236,11 +255,11 @@ function getPeakDataArray(splittedDataArr): string[][] {
  * @param {string[]} describerArr 
  * @returns {((Metadata|null)[])} 
  */
-function getMetadataFromDescriber(describerArr: string[]): (Metadata|null)[] {
+function getMetadataFromDescriber(describerArr: string[], isStrict: boolean): (Metadata|null)[] {
   return describerArr.map((datum) => {
-    const nucleo = /\d+(\w)(?: NMR)/.exec(datum);
-    const freq = /(\d+) MHz/.exec(datum);
-    const solvent = /(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i.exec(datum);
+    const nucleo = datum.match(nmrRegex.nucleo[Number(isStrict)]);
+    const freq = datum.match(nmrRegex.freq[Number(isStrict)]);
+    const solvent = datum.match(nmrRegex.solvent[Number(isStrict)]);
     if (!nucleo || !freq || !solvent) {
       return null;
     }
@@ -268,5 +287,5 @@ function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
   const decay = type === 'H' ? 1 : 4;
   return meta.freq < minFreq / decay
     || meta.freq > maxFreq / decay
-    || !solventInfo[meta.solvent];
+    || !solventsInfo[meta.solvent];
 }

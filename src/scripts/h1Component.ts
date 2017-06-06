@@ -4,12 +4,13 @@ import { some, split, map,
   forEach, clone, every, replace,
   slice, join, chain,
   compact } from 'lodash';
-import { solventInfo, ComponentData } from './utils/constants';
+import { ComponentData, solventsInfo } from './utils/constants';
 import { Multiplet, Metadata, H1Data,
   H1RenderObj, handleNMRData, getDataArray,
   HighlightType, isSinglePeak,
   isMultiplePeak, isMultiplePeakWithCouplingConstant,
   isPeak,
+  nmrRegex,
 } from './utils/nmr';
 
 const peakRangePlaceholder = 'PEAKRANGE';
@@ -28,6 +29,13 @@ export class H1Component {
     infoErr: string;
     peakErr: string;
   };
+  private domElements: {
+    $general: HTMLInputElement;
+    $autoFixJ: HTMLInputElement;
+    $strict: HTMLInputElement;
+    $error: HTMLDivElement;
+  };
+  private isStrict: boolean;
   // instance for singleton
   private static instance: H1Component;
 
@@ -44,6 +52,13 @@ export class H1Component {
       infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
+    this.domElements = {
+      $general: document.getElementById('generalMultiplet') as HTMLInputElement,
+      $autoFixJ: document.getElementById('autoFixJ') as HTMLInputElement,
+      $strict: document.getElementById('strict') as HTMLInputElement,
+      $error: document.getElementById('error') as HTMLDivElement,
+    };
+    this.isStrict = this.domElements.$strict.checked;
   }
 
   /**
@@ -56,11 +71,13 @@ export class H1Component {
    */
   public handle(): ComponentData|null {
     this.reset();
-    const parsedData = handleNMRData('H', this);
+    // if (this.inputtedData === '') {
+    //   return null;
+    // }
+    const parsedData = handleNMRData('H', this, this.isStrict);
     if (parsedData === null) {
       return null;
     }
-    this.matchedData = getDataArray(this.inputtedData, 'H');
     const peakData = parsedData.peakData;
     const metadataArr = <Metadata[]>parsedData.metadataArr;
     // individual peak data objects
@@ -144,12 +161,13 @@ export class H1Component {
   private renderStrArrays(h1RenderObjs: H1RenderObj[]): string[] {
     const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
       const headStr = `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
-      ${solventInfo[obj.meta.solvent].formattedString}) δ `;
+      ${solventsInfo[obj.meta.solvent].formattedString}) δ `;
       const peakStr = chain(obj.peak)
         .map(this.stringifyPeakData.bind(this))
         .join(', ')
         .value();
-      return headStr + peakStr;
+      const tailStr = '.';
+      return headStr + peakStr + tailStr;
     });
     const output = map(formattedPeakStrings, (str) => {
       return this.willHighlightData
@@ -176,7 +194,7 @@ export class H1Component {
    */
   private stringifyMetadata(metadata: Metadata) {
     return `<sup>1</sup>H NMR (${metadata.freq} MHz, \
-      ${solventInfo[metadata.solvent].formattedString}) δ `;
+      ${solventsInfo[metadata.solvent].formattedString}) δ `;
   }
 
   /**
@@ -195,9 +213,13 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private stringifyPeakData(peakObj: H1Data): string {
+  private stringifyPeakData(peakObj: H1Data|string): string {
     if (!peakObj) {
       return '';
+    }
+    // if peakObj is errMsg bubbled up
+    if (typeof peakObj === 'string') {
+      return peakObj;
     }
     let formattedPeak = '';
     if (peakObj.peak !== peakRangePlaceholder) {
@@ -266,12 +288,11 @@ export class H1Component {
    * 
    * @memberof H1Component
    */
-  private parsePeakData(data: string): H1Data|null {
-    // tslint:disable-next-line:max-line-length
-    const regexWithCoupling = /(\d+\.?\d*) *\((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *Hz *, *(\d+)H\)/g;
-    const regexWithoutCoupling = /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/g;
-    const couplingMatch = regexWithCoupling.exec(data);
-    const nonCouplingMatch = regexWithoutCoupling.exec(data);
+  private parsePeakData(data: string): H1Data|string {
+    const regexWithCoupling = nmrRegex.h1PeakWithCouplingConstants[Number(this.isStrict)];
+    const regexWithoutCoupling = nmrRegex.h1PeakWithoutCouplingConstants[Number(this.isStrict)];
+    const couplingMatch = data.match(regexWithCoupling);
+    const nonCouplingMatch = data.match(regexWithoutCoupling);
     if (couplingMatch) {
       const couplingConstants = chain(couplingMatch)
         .slice(3, 6)
@@ -298,22 +319,16 @@ export class H1Component {
         errMsg,
       };
     } else {
-      const errText = this.inputtedData
-        .replace(data, `<span class="danger-text">${data}</span>`)
-        .replace(/\n/g, `<br>`);
-      this.renderError(this.errMsg.peakErr + errText);
-      return null;
+      return `<span class="danger-text" data-tooltip="数据有误">${data}</span>`;
     }
   }
 
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
-    if (!peakDatum) {
+    if (!peakDatum || typeof peakDatum === 'string') {
       return peakDatum;
     }
-    const $general = document.getElementById('generalMultiplet') as HTMLInputElement;
-    const $autoFixJ = document.getElementById('autoFixJ') as HTMLInputElement;
-    const isGeneral = !$general.checked;
-    const willFixJ = $autoFixJ.checked;
+    const isGeneral = !this.domElements.$general.checked;
+    const willFixJ = this.domElements.$autoFixJ.checked;
     const peakDatumCopy = clone(peakDatum);
     if (!isPeak(peakDatumCopy.peakType)) {
       peakDatumCopy.peakTypeError = true;
@@ -413,11 +428,10 @@ export class H1Component {
     return str;
   }
 
-  private renderError(msg): void {
+  private renderError(msg: string): void {
     clearDOMElement('#output');
     if (this.inputtedData !== '') {
-      const $error = document.getElementById('error') as HTMLDivElement;
-      $error.innerHTML = msg;
+      this.domElements.$error.innerHTML = msg;
     }
   }
 

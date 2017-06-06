@@ -22,12 +22,8 @@ export class HrmsComponent {
 
   }
 
-  handle(): ComponentData {
-    return {
-      input: ['randomshit'],
-      outputPlain: ['1'],
-      outputRich: ['1'],
-    };
+  handle(): ComponentData|null {
+    return null;
   }
 
   public static get getInstance(): HrmsComponent {

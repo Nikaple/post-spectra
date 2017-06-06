@@ -68,7 +68,7 @@ export class AppComponent {
     const c13Data = C13Component.getInstance.handle();
     const hrmsData = HrmsComponent.getInstance.handle();
     const componentsData = compact([h1Data, c13Data, hrmsData]);
-    if (componentsData.length < 3) {
+    if (componentsData.length === 0) {
       // this.renderError();
       return;
     }
