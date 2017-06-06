@@ -9,30 +9,29 @@
 </head>
 
 <body>
-    <div class="pure-form pure-form-stacked my-form">
-        <h1>NMR 数据处理</h1>
-        <fieldset class="radio-ion-field">
+    <header class="header">
+        <h2 class="app-title">Chemical Supporting Information Helper</h2>
+        <div class="checkbox-wrapper">
             <input name="h1-checkbox" type="checkbox" id="generalMultiplet" class="radio-ion" checked>
             <span class="radio-text">将非d,t,q峰当做多重峰处理</span>
             <input name="h1-checkbox" type="checkbox" id="autoFixJ" class="radio-ion" checked>
             <span class="radio-text">自动校正J值</span>
             <input name="h1-checkbox" type="checkbox" id="strict" class="radio-ion" checked>
             <span class="radio-text">严格模式</span>
-        </fieldset>
-        <textarea id="input" rows="14" cols="55" height="100" placeholder="H1 peaks here..." class="input-textarea"></textarea>
-        <div><span id="output" class="output-text"></span></div>
-        <div><span id="error" class="output-text"></span></div>
-        <h1>高分辨数据处理</h1>
-        <fieldset class="radio-ion-field">
-            <input type="radio" name="ion" value="None" class="radio-ion" checked>
-            <span class="radio-text">None</span>
-            <input type="radio" name="ion" value="H" class="radio-ion" checked>
-            <span class="radio-text">H<sup>+</sup></span>
-            <input type="radio" name="ion" value="Na" class="radio-ion">
-            <span class="radio-text">Na<sup>+</sup></span>
-            <input type="radio" name="ion" value="K" class="radio-ion">
-            <span class="radio-text">K<sup>+</sup></span>
-        </fieldset>
+        </div>
+    </header>
+    <main class="main-wrapper">
+        <div class="input-container">
+            <textarea id="input" placeholder="Supporting Information here..." class="input-textarea"></textarea>
+        </div>
+        <div class="output-container">
+            <div class="output-wrapper">
+                <div id="output" class="output-text"></div>
+                <div id="error" class="output-error"></div>
+            </div>
+        </div>
+    </main>
+    <!--<div>
         <div class="input-formula-container">
             <input id="formula" name="mass" type="text" placeholder="formula here..." class="input-mass">
             <input id="hrmsData" name="mass" type="number" placeholder="HRMS data here..." class="input-mass" min="0.0" step="0.0001">
@@ -42,7 +41,7 @@
         <div id="newFormula"></div>
         <div id="weight"></div>
         <div id="massError"></div>
-    </div>
+    </div>-->
 </body>
 
 </html>

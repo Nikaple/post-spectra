@@ -1,75 +1,84 @@
-@import '../../node_modules/purecss/build/forms-nr-min';
+@import '../../node_modules/normalize.css/normalize.css';
+
+@import 'tooltip';
+@import 'mixin';
+@import 'scrollbar';
+
+$header-background: #444444;
+$header-textcolor: #fefefe;
+$textarea-background: #F9F9F5;
+$textarea-textcolor: #2C3E50;
+$output-background: #F9F9F5;
+$output-textcolor: #2C3E50;
+
 html,
 body {
-    /*background-color: black;*/
     font-family: "Microsoft Yahei", "Arial", sans-serif;
-    padding-top: 1%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,body {
+    height: 100%;
+}
+
+.header {
+    background-color: $header-background;
+    color: $header-textcolor;
+    width: 100%;
+    height: 15%;
+    padding: .5rem;
+    position: relative;
     text-align: center;
-}
-
-textarea,
-input {
-    font-family: "Microsoft Yahei", "Arial", sans-serif;
-    font-size: 16px;
-}
-
-textarea {
-    width: 600px;
-    max-width: 600px;
-}
-
-h1 {
-    margin-bottom: 5px;
-}
-
-.tooltip {
-    max-width: 250px;
-    border: 1px solid black;
-    display: inline-block;
-    position: absolute;
-    text-align: center;
-    padding: 5px;
-    background: #fff;
-    box-shadow: 0px 0px 8px 3px rgba(110, 110, 110, .4);
-    color: #242424;
-}
-
-.my-form {
-    width: 600px;
-    max-width: 600px;
-    margin: 0 auto;
-    .radio-ion-field {
-        display: block;
+    .app-title {
+        font-size: 2rem;
+    }
+    .checkbox-wrapper {
         margin: 0 auto;
+        font-size: 1rem;
     }
-    .radio-text {
-        font-size: 15px;
+}
+
+.main-wrapper {
+    width: 100%;
+    height: 85%;
+    overflow-y: hidden;
+    .input-container {
+        @include container-base;
+        .input-textarea {
+            color: $textarea-textcolor;
+            background-color: $textarea-background;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-style: none; 
+            border-color: transparent; 
+            overflow-y: scroll; 
+            overflow-x: hidden;
+            resize: none;
+            outline: none;
+            &:focus {
+                border: none;
+                outline: none;
+            }
+        }
     }
-    .radio-ion {
-        display: inline-block;
-    }
-    .input-textarea {
-        width: 600px;
-    }
-    .input-formula-container {
-        display: inline-block;
-        margin: 0 auto;
-    }
-    .input-mass {
-        width: 400px;
-        display: inline-block;
-    }
-    .output-text {
-        display: inline-block;
-        text-align: left;
-    }
-    .danger-text {
-        background-color: hsl(0, 100%, 80%);
-    }
-    .warning-text {
-        background-color: hsl(60, 100%, 80%);
-    }
-    .success-text {
-        background-color: hsl(120, 100%, 80%);
+    .output-container {
+        @include container-base;
+        background-color: $output-background;
+        color: $output-textcolor;
+        overflow-y: scroll;
+        .output-wrapper {
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
     }
 }
