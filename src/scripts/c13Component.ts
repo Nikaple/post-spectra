@@ -37,8 +37,8 @@ export class C13Component {
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
     this.domElements = {
-      $error: document.getElementById('error') as HTMLDivElement,
-      $strict: document.getElementById('strict') as HTMLInputElement,
+      $error: document.querySelector('#error') as HTMLDivElement,
+      $strict: document.querySelector('#strict') as HTMLInputElement,
     };
     this.isStrict = this.domElements.$strict.checked;
   }
@@ -180,7 +180,7 @@ export class C13Component {
   }
 
   private setDataFromInput(): void {
-    this.inputtedData = (<HTMLInputElement>document.getElementById('input')).value;
+    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
   }
 
   private fixC13Peaks(peak: C13Data): C13Data {

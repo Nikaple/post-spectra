@@ -53,10 +53,10 @@ export class H1Component {
       peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
     };
     this.domElements = {
-      $general: document.getElementById('generalMultiplet') as HTMLInputElement,
-      $autoFixJ: document.getElementById('autoFixJ') as HTMLInputElement,
-      $strict: document.getElementById('strict') as HTMLInputElement,
-      $error: document.getElementById('error') as HTMLDivElement,
+      $general: document.querySelector('#generalMultiplet') as HTMLInputElement,
+      $autoFixJ: document.querySelector('#autoFixJ') as HTMLInputElement,
+      $strict: document.querySelector('#strict') as HTMLInputElement,
+      $error: document.querySelector('#error') as HTMLDivElement,
     };
     this.isStrict = this.domElements.$strict.checked;
   }
@@ -415,7 +415,7 @@ export class H1Component {
   }
 
   private setDataFromInput(): void {
-    const $h1Peaks = <HTMLInputElement>document.getElementById('input');
+    const $h1Peaks = <HTMLInputElement>document.querySelector('#input');
     this.inputtedData = $h1Peaks.value;
   }
 

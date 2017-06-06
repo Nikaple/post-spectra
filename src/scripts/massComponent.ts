@@ -62,11 +62,11 @@ export class MassComponent {
    */
   private handle(): void {
     // get DOM elements
-    const $formula = document.getElementById('formula') as HTMLInputElement;
+    const $formula = document.querySelector('#formula') as HTMLInputElement;
     const $radios = document.querySelectorAll(
       'input[name="ion"]') as NodeListOf<HTMLInputElement>;
-    const $yield = document.getElementById('yield') as HTMLInputElement;
-    const $mmol = document.getElementById('mmol') as HTMLInputElement;
+    const $yield = document.querySelector('#yield') as HTMLInputElement;
+    const $mmol = document.querySelector('#mmol') as HTMLInputElement;
 
     // initialize
     this.exactMass = 0;
@@ -188,7 +188,7 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderError(): void {
-    const $error = document.getElementById('massError') as HTMLDivElement;
+    const $error = document.querySelector('#massError') as HTMLDivElement;
     $error.innerHTML = 'Invalid formula !';
     clearDOMElement('#newFormula');
     clearDOMElement('#weight');
@@ -203,8 +203,8 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderFormula(formula: string): void {
-    const $newFormula = document.getElementById('newFormula') as HTMLDivElement;
-    const $hrmsData = document.getElementById('hrmsData') as HTMLInputElement;
+    const $newFormula = document.querySelector('#newFormula') as HTMLDivElement;
+    const $hrmsData = document.querySelector('#hrmsData') as HTMLInputElement;
     const foundMass = $hrmsData.value === '' ? 'YOURDATA' : Number($hrmsData.value).toFixed(4);
     $newFormula.innerHTML = `HRMS (ESI): m/z [M + H]<sup>+</sup> calcd for \
       ${formula}: ${this.exactMass.toFixed(4)} found: ${foundMass}`;
@@ -221,7 +221,7 @@ export class MassComponent {
    * @memberof MassComponent
    */
   private renderYield(productYield: number, mmol: number): void {
-    const $weight = document.getElementById('weight') as HTMLDivElement;
+    const $weight = document.querySelector('#weight') as HTMLDivElement;
     const weight = (this.exactMass * productYield / 100 * mmol).toFixed(0);
     $weight.innerHTML = `Yield: ${productYield}% (${weight} mg);`;
     clearDOMElement('#massError');

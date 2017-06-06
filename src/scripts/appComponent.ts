@@ -45,7 +45,7 @@ export class AppComponent {
 
     // bind event listeners
     const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
-    const $peaks = document.getElementById('input') as HTMLTextAreaElement;
+    const $peaks = document.querySelector('#input') as HTMLTextAreaElement;
     forEach([$peaks, ...$checkboxes], (el) => {
       el.addEventListener('input', this.handle.bind(this));
       el.addEventListener('change', this.handle.bind(this));
@@ -68,7 +68,7 @@ export class AppComponent {
     const c13Data = C13Component.getInstance.handle();
     const hrmsData = HrmsComponent.getInstance.handle();
     const componentsData = compact([h1Data, c13Data, hrmsData]);
-    if (componentsData.length === 0) {
+    if (componentsData.length < 3) {
       // this.renderError();
       return;
     }
