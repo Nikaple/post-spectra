@@ -1,5 +1,5 @@
 import { Tooltip } from './utils/tooltip';
-import { pullAll, forEach, compact, replace, chain, includes } from 'lodash';
+import { pullAll, forEach, compact, replace, chain, includes, round } from 'lodash';
 import { H1Component } from './h1Component';
 import { C13Component } from './c13Component';
 import { HrmsComponent } from './hrmsComponent';
@@ -42,15 +42,8 @@ export class AppComponent {
     H1Component.getInstance;
     C13Component.getInstance;
     HrmsComponent.getInstance;
-
-    // bind event listeners
-    const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
-    const $peaks = document.querySelector('#input') as HTMLTextAreaElement;
-    forEach([$peaks, ...$checkboxes], (el) => {
-      el.addEventListener('input', this.handle.bind(this));
-      el.addEventListener('change', this.handle.bind(this));
-    });
-
+    
+    this.attachEvents();
     // handle changes
     this.handle();
   }
@@ -68,14 +61,20 @@ export class AppComponent {
     const c13Data = C13Component.getInstance.handle();
     const hrmsData = HrmsComponent.getInstance.handle();
     const componentsData = compact([h1Data, c13Data, hrmsData]);
-    if (componentsData.length < 3) {
-      // this.renderError();
+    if (componentsData.length === 0) {
       return;
     }
     this.render(<ComponentData[]>componentsData);
   }
 
 
+  /**
+   * render received data to screen
+   * 
+   * @param {ComponentData[]} componentsData 
+   * 
+   * @memberof AppComponent
+   */
   public render(componentsData: ComponentData[]) {
     // clear error div
     clearDOMElement('#error');
@@ -106,6 +105,71 @@ export class AppComponent {
     this.$output.innerHTML = richText;
   }
 
+  /**
+   * attach all events
+   * 
+   * @private
+   * 
+   * @memberof AppComponent
+   */
+  private attachEvents() {
+    this.onTextChange();
+    this.onScrollSync();
+  }
+
+  /**
+   * listen on input of textarea
+   * 
+   * @private
+   * 
+   * @memberof AppComponent
+   */
+  private onTextChange() {
+    // bind event listeners
+    const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
+    const $peaks = document.querySelector('#input') as HTMLTextAreaElement;
+    forEach([$peaks, ...$checkboxes], (el) => {
+      el.addEventListener('input', this.handle.bind(this));
+      el.addEventListener('change', this.handle.bind(this));
+    });
+  }
+
+  /**
+   * synchronize input and output by percentage
+   * 
+   * @private
+   * 
+   * @memberof AppComponent
+   */
+  private onScrollSync() {
+    const $outputScrollbarHolder = <HTMLDivElement>document.querySelector('.output-container');
+    const $inputScrollbarHolder = this.$input;
+
+    let leftScrollFlag = false;
+    let rightScrollFlag = false;
+
+    $inputScrollbarHolder.addEventListener('scroll', inputScroll);
+    $outputScrollbarHolder.addEventListener('scroll', outputScroll);
+
+    function outputScroll() {
+      const scrollPercent = $outputScrollbarHolder.scrollTop / $outputScrollbarHolder.scrollHeight;
+      if (!leftScrollFlag) {
+        $inputScrollbarHolder.scrollTop = 
+        round(scrollPercent * $inputScrollbarHolder.scrollHeight);
+        rightScrollFlag = true;
+      }
+      leftScrollFlag = false;
+    }
+    function inputScroll() {
+      const scrollPercent = $inputScrollbarHolder.scrollTop / $inputScrollbarHolder.scrollHeight;
+      if (!rightScrollFlag) {
+        $outputScrollbarHolder.scrollTop = 
+        round(scrollPercent * $outputScrollbarHolder.scrollHeight);
+        leftScrollFlag = true;
+      }
+      rightScrollFlag = false;
+    }
+  }
   /**
    * Creates an unique instance of AppComponent
    * 

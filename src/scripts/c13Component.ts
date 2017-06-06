@@ -75,7 +75,7 @@ export class C13Component {
    * @memberof C13Component
    */
   private reset() {
-    this.setDataFromInput();
+    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
   } 
   
@@ -177,10 +177,6 @@ export class C13Component {
   private roundMetadataFreq(freq: number): number {
     const decay = 4;
     return round(freq * decay, -1) / decay;
-  }
-
-  private setDataFromInput(): void {
-    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
   }
 
   private fixC13Peaks(peak: C13Data): C13Data {

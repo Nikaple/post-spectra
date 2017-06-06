@@ -1,6 +1,6 @@
 import '../styles/base.scss';
 
-// // mock data
+// mock data
 
 // import { mockH1Data, mockC13Data, mockMassData } from './utils/mock';
 // const $input = <HTMLInputElement>document.querySelector('#input');

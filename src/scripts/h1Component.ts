@@ -105,7 +105,7 @@ export class H1Component {
    * @memberof H1Component
    */
   private reset() {
-    this.setDataFromInput();
+    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
   } 
 
@@ -309,7 +309,7 @@ export class H1Component {
       const peakArr = nonCouplingMatch[1].split(/ *[–−-] */g);
       const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
       const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
-      const errMsg = danger ? '错误：多重峰化学位移区间应由低场向高场书写' : '';
+      const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
       return {
         peak,
         peakType: nonCouplingMatch[3] as Multiplet,
@@ -332,29 +332,29 @@ export class H1Component {
     const peakDatumCopy = clone(peakDatum);
     if (!isPeak(peakDatumCopy.peakType)) {
       peakDatumCopy.peakTypeError = true;
-      peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰类型不存在`; 
+      peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰类型不存在`; 
     } else {
       if (isMultiplePeak(peakDatumCopy.peakType)) {
         // peak type 'm' should have an range of peak
         if (typeof peakDatumCopy.peak === 'string') {
           peakDatumCopy.danger = true;
-          peakDatumCopy.errMsg = '错误：多重峰化学位移应为区间形式';
+          peakDatumCopy.errMsg = '多重峰化学位移应为区间形式';
         }
         if (peakDatumCopy.couplingConstants !== null) {
           // single peaks shouldn't have coupling constants
           peakDatumCopy.warning = true;
-          peakDatumCopy.errMsg = `错误：多重峰不存在耦合常数`;
+          peakDatumCopy.errMsg = `多重峰不存在耦合常数`;
         }
       } else { // all peak types except 'm' should only have one peak value
         if (typeof peakDatumCopy.peak !== 'string') {
           peakDatumCopy.danger = true;
-          peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰化学位移应为单值`;
+          peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰化学位移应为单值`;
         }
         if (isSinglePeak(peakDatumCopy.peakType)) {
           if (peakDatumCopy.couplingConstants !== null) {
             // single peaks shouldn't have coupling constants
             peakDatumCopy.peakTypeError = true;
-            peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰不存在耦合常数`;
+            peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰不存在耦合常数`;
           }
         } else {
           if (isMultiplePeakWithCouplingConstant(peakDatumCopy.peakType, isGeneral)) {
@@ -363,7 +363,7 @@ export class H1Component {
               if (!peakDatumCopy.couplingConstants) {
                 // multiple peaks should have coupling constants
                 peakDatumCopy.peakTypeError = true;
-                peakDatumCopy.errMsg = `错误：${peakDatumCopy.peakType}峰应有耦合常数`;
+                peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰应有耦合常数`;
               } else {
                 const isAllCouplingConstantValid = every(
                   peakDatumCopy.couplingConstants,
@@ -393,7 +393,7 @@ export class H1Component {
             peakDatumCopy.peakType = 'm';
             peakDatumCopy.peak = peakRangePlaceholder;
             peakDatumCopy.couplingConstants = null;
-            peakDatumCopy.errMsg = `警告：已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
+            peakDatumCopy.errMsg = `已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
           }
         }
       }
@@ -401,11 +401,31 @@ export class H1Component {
     return peakDatumCopy;
   }
 
+  /**
+   * round the coupling constants so that they are multiples of frequency / 1000
+   * 
+   * @private
+   * @param {number} couplingConstant 
+   * @param {number} freq 
+   * @returns {number} 
+   * 
+   * @memberof H1Component
+   */
   private roundCouplingConstant(couplingConstant: number, freq: number): number {
     const MAGNIFICATION = 1000;
     return Math.round(MAGNIFICATION * couplingConstant / freq) * freq / MAGNIFICATION;
   }
 
+  /**
+   * return if the coupling constant is valid, and need to be rounded
+   * 
+   * @private
+   * @param {(number|null)} couplingConstant 
+   * @param {number} freq 
+   * @returns {boolean} 
+   * 
+   * @memberof H1Component
+   */
   private isCouplingConstantValid(couplingConstant: number|null, freq: number): boolean {
     if (!couplingConstant) {
       return false;
@@ -414,10 +434,7 @@ export class H1Component {
     return MAGNIFICATION * couplingConstant % freq === 0;
   }
 
-  private setDataFromInput(): void {
-    const $h1Peaks = <HTMLInputElement>document.querySelector('#input');
-    this.inputtedData = $h1Peaks.value;
-  }
+  
 
   private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
     if (type === HighlightType.Danger) {
