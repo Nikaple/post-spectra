@@ -8,10 +8,10 @@ import { ComponentData, solventsInfo } from './utils/constants';
 import { Multiplet, Metadata, H1Data,
   H1RenderObj, handleNMRData, getDataArray,
   HighlightType, isSinglePeak,
-  isMultiplePeak, isMultiplePeakWithCouplingConstant,
+  isMultiplePeak, isMultiplePeakWithJ,
   isPeak,
-  nmrRegex,
 } from './utils/nmr';
+import { nmrRegex } from './utils/regex';
 
 const peakRangePlaceholder = 'PEAKRANGE';
 
@@ -74,7 +74,7 @@ export class H1Component {
     // if (this.inputtedData === '') {
     //   return null;
     // }
-    const parsedData = handleNMRData('H', this, this.isStrict);
+    const parsedData = handleNMRData(this, 'H', this.isStrict);
     if (parsedData === null) {
       return null;
     }
@@ -147,7 +147,7 @@ export class H1Component {
    *      {
    *        peak: 7.77,
    *        peakType: 's',
-   *        couplingConstants: null,
+   *        Js: null,
    *        hydrogenCount: 1,
    *      }
    *    ]
@@ -204,7 +204,7 @@ export class H1Component {
    * this.stringifyPeakData({
    *  peak: [7.10, 6.68],
    *  peakType: 'm',
-   *  couplingConstants: null,
+   *  Js: null,
    *  hydrogenCount: 1
    * });
    * @private
@@ -241,24 +241,24 @@ export class H1Component {
       HighlightType.Danger,
       peakObj.errMsg,
     );
-    if (peakObj.couplingConstants === null) {
+    if (peakObj.Js === null) {
       // for peak object without J
       return `${rendeDangerPeak} \
       (${rendeDangerPeakType}, ${peakObj.hydrogenCount}H)`;
     } else {
       // for peak object with J
-      const formattedCouplingConstant = chain(peakObj.couplingConstants)
-        .map(couplingConstant => couplingConstant.toFixed(1))
+      const formattedJ = chain(peakObj.Js)
+        .map(J => J.toFixed(1))
         .join(', ')
         .value();
-      const rendeDangerCouplingConstant = this.renderOnCondition(
+      const rendeDangerJ = this.renderOnCondition(
         this.willHighlightData && peakObj.warning,
-        formattedCouplingConstant,
+        formattedJ,
         HighlightType.Warning,
         <string>peakObj.errMsg,
       );
       return `${rendeDangerPeak} (${rendeDangerPeakType}, <em>J</em> = \
-      ${rendeDangerCouplingConstant} Hz, ${peakObj.hydrogenCount}H)`;
+      ${rendeDangerJ} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
 
@@ -278,9 +278,9 @@ export class H1Component {
    * returns object form of peak data
    * @example 
    * [[
-   *   {"peak":"7.15","peakType":"t","couplingConstants":11.2,"hydrogenCount":1},
-   *   {"peak":["7.10","6.68"],"peakType":"m","couplingConstants":null,"hydrogenCount":1},
-   *   {"peak":"4.46","peakType":"s","couplingConstants":null,"hydrogenCount":3},
+   *   {"peak":"7.15","peakType":"t","Js":11.2,"hydrogenCount":1},
+   *   {"peak":["7.10","6.68"],"peakType":"m","Js":null,"hydrogenCount":1},
+   *   {"peak":"4.46","peakType":"s","Js":null,"hydrogenCount":3},
    * ]]
    * @private
    * @param {string} data 
@@ -289,12 +289,13 @@ export class H1Component {
    * @memberof H1Component
    */
   private parsePeakData(data: string): H1Data|string {
-    const regexWithCoupling = nmrRegex.h1PeakWithCouplingConstants[Number(this.isStrict)];
-    const regexWithoutCoupling = nmrRegex.h1PeakWithoutCouplingConstants[Number(this.isStrict)];
+    const regexWithCoupling = nmrRegex.h1PeakWithJs[Number(this.isStrict)];
+    const regexWithoutCoupling = nmrRegex.h1PeakWithoutJs[Number(this.isStrict)];
     const couplingMatch = data.match(regexWithCoupling);
     const nonCouplingMatch = data.match(regexWithoutCoupling);
     if (couplingMatch) {
-      const couplingConstants = chain(couplingMatch)
+      // tslint:disable-next-line:variable-name
+      const Js = chain(couplingMatch)
         .slice(3, 6)
         .map(Number)
         .compact()
@@ -302,7 +303,7 @@ export class H1Component {
       return {
         peak: couplingMatch[1],
         peakType: couplingMatch[2] as Multiplet,
-        couplingConstants,
+        Js,
         hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
@@ -313,7 +314,7 @@ export class H1Component {
       return {
         peak,
         peakType: nonCouplingMatch[3] as Multiplet,
-        couplingConstants: null,
+        Js: null,
         hydrogenCount: +nonCouplingMatch[4],
         danger,
         errMsg,
@@ -340,7 +341,7 @@ export class H1Component {
           peakDatumCopy.danger = true;
           peakDatumCopy.errMsg = '多重峰化学位移应为区间形式';
         }
-        if (peakDatumCopy.couplingConstants !== null) {
+        if (peakDatumCopy.Js !== null) {
           // single peaks shouldn't have coupling constants
           peakDatumCopy.warning = true;
           peakDatumCopy.errMsg = `多重峰不存在耦合常数`;
@@ -351,39 +352,39 @@ export class H1Component {
           peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰化学位移应为单值`;
         }
         if (isSinglePeak(peakDatumCopy.peakType)) {
-          if (peakDatumCopy.couplingConstants !== null) {
+          if (peakDatumCopy.Js !== null) {
             // single peaks shouldn't have coupling constants
             peakDatumCopy.peakTypeError = true;
             peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰不存在耦合常数`;
           }
         } else {
-          if (isMultiplePeakWithCouplingConstant(peakDatumCopy.peakType, isGeneral)) {
+          if (isMultiplePeakWithJ(peakDatumCopy.peakType, isGeneral)) {
             // for all peaks with coupling constants
             if (willFixJ) {
-              if (!peakDatumCopy.couplingConstants) {
+              if (!peakDatumCopy.Js) {
                 // multiple peaks should have coupling constants
                 peakDatumCopy.peakTypeError = true;
                 peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰应有耦合常数`;
               } else {
-                const isAllCouplingConstantValid = every(
-                  peakDatumCopy.couplingConstants,
-                  (couplingConstant) => {
-                    return this.isCouplingConstantValid(couplingConstant, freq);
+                const isAllJValid = every(
+                  peakDatumCopy.Js,
+                  (J) => {
+                    return this.isJValid(J, freq);
                   });
-                if (!isAllCouplingConstantValid) {
-                  peakDatumCopy.couplingConstants = map(
-                    peakDatumCopy.couplingConstants,
-                    (couplingConstant) => {
-                      return this.roundCouplingConstant(couplingConstant, freq);
+                if (!isAllJValid) {
+                  peakDatumCopy.Js = map(
+                    peakDatumCopy.Js,
+                    (J) => {
+                      return this.roundJ(J, freq);
                     });
                   peakDatumCopy.warning = true;
-                  const originalCouplingConstantsString = 
-                     chain(<number[]>peakDatum.couplingConstants)
+                  const originalJsString = 
+                     chain(<number[]>peakDatum.Js)
                     .map(data => data.toFixed(1))
                     .join(', ')
                     .value();
                   peakDatumCopy.errMsg = `原始数据： <em>J</em> = \
-                  ${originalCouplingConstantsString}`;
+                  ${originalJsString}`;
                 }
               }
             }
@@ -392,7 +393,7 @@ export class H1Component {
             peakDatumCopy.danger = true;
             peakDatumCopy.peakType = 'm';
             peakDatumCopy.peak = peakRangePlaceholder;
-            peakDatumCopy.couplingConstants = null;
+            peakDatumCopy.Js = null;
             peakDatumCopy.errMsg = `已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
           }
         }
@@ -405,33 +406,33 @@ export class H1Component {
    * round the coupling constants so that they are multiples of frequency / 1000
    * 
    * @private
-   * @param {number} couplingConstant 
+   * @param {number} J 
    * @param {number} freq 
    * @returns {number} 
    * 
    * @memberof H1Component
    */
-  private roundCouplingConstant(couplingConstant: number, freq: number): number {
+  private roundJ(J: number, freq: number): number {
     const MAGNIFICATION = 1000;
-    return Math.round(MAGNIFICATION * couplingConstant / freq) * freq / MAGNIFICATION;
+    return Math.round(MAGNIFICATION * J / freq) * freq / MAGNIFICATION;
   }
 
   /**
    * return if the coupling constant is valid, and need to be rounded
    * 
    * @private
-   * @param {(number|null)} couplingConstant 
+   * @param {(number|null)} J 
    * @param {number} freq 
    * @returns {boolean} 
    * 
    * @memberof H1Component
    */
-  private isCouplingConstantValid(couplingConstant: number|null, freq: number): boolean {
-    if (!couplingConstant) {
+  private isJValid(J: number|null, freq: number): boolean {
+    if (!J) {
       return false;
     }
     const MAGNIFICATION = 1000;
-    return MAGNIFICATION * couplingConstant % freq === 0;
+    return MAGNIFICATION * J % freq === 0;
   }
 
   

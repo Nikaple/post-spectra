@@ -45,7 +45,7 @@ export class C13Component {
 
   public handle(): ComponentData|null {
     this.reset();
-    const parsedData = handleNMRData('C', this, this.isStrict);
+    const parsedData = handleNMRData(this, 'C', this.isStrict);
     if (parsedData === null) {
       return null;
     }

@@ -1,7 +1,8 @@
 import { map, head, tail, split, some, includes, trimEnd, chain } from 'lodash';
 import { minFreq, maxFreq, solventsInfo } from './constants';
+import { nmrRegex } from './regex';
 
-export type Nucleo = 'H'|'C'|'F'|'P';
+export type Nucleo = 'H'|'C';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
 export type C13Data = string|null;
 
@@ -20,7 +21,7 @@ export interface Metadata {
 export interface H1Data {
   peak: string|string[];
   peakType: Multiplet;
-  couplingConstants: number[]|null;
+  Js: number[]|null;
   hydrogenCount: number;
   danger?: boolean; // highlight to red or not
   warning?: boolean; // highlight to yellow or not
@@ -43,30 +44,6 @@ export interface C13RenderObj {
   peak: C13Data[];
 }
 
-// 0: not strict mode
-// 1: strict mode
-export const nmrRegex = {
-  h1Reg: [/1H NMR(.+?\dH\) *[ .;，。；]|.+\dH\) *, *)/g,
-    /1H NMR.+?(\dH\)[.;])/g],
-  c13Reg: [/13C NMR.+MHz.+?\d+\.?\d*(\(\d*\))? ?[ ,.;，。；](?! *\d\.?\d*)/g,
-    /13C NMR.+?MHz.+?\d{1,3}\.\d{1,2}(\(\d\))?[.;]/g],
-  splitData: [/:? *δ *=? *(?:\(ppm\))?| *[,，] *(?!\d+\.\d+\s+\w)(?=\d+\.\d*)/,
-    /:? δ(?: \(ppm\))?(?: ?= )?|, *(?=\d{1,3}\.\d{1,2})/],
-  nucleo: [/\d+(\w)(?: NMR)/, /\d{1,2}([A-Z])(?: NMR)/],
-  freq: [/(\d+) *MHz/, /(\d{2,3}) MHz/],
-  solvent: [/(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i,
-    /(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i],
-  h1PeakWithCouplingConstants: [
-    // tslint:disable-next-line:max-line-length
-    /(\d+\.?\d*) *\((\w+), J *= *(\d+\.?\d*)(?:, *)?(\d+\.?\d*)?(?:, *)?(\d+\.?\d*)? *(?:Hz)? *, *(\d+)H\)/,
-    // tslint:disable-next-line:max-line-length
-    /(\d{1,2}\.\d{2}) \((\w+), *J *= *(\d{1,2}\.\d)(?:, *)?(\d{1,2}\.\d)?(?:, *)?(\d{1,2}\.\d)? Hz, (\d{1,2})H\)/,
-  ],
-  h1PeakWithoutCouplingConstants: [
-    /(\d+\.?\d*( *[–−-] *\d+\.?\d*)?) *\( *(\w+) *, *(?:(\d+)H\))/,
-    /(\d{1,2}\.\d{2}( ?[–−-] ?\d{1,2}\.\d{2})?) \((\w+), (\d{1,2})H\)/,
-  ],
-};
 
 /**
  * return if the peak is peak
@@ -101,7 +78,7 @@ export function isSinglePeak(peak: Multiplet): boolean {
  * @param {boolean} [isGeneral] 
  * @returns 
  */
-export function isMultiplePeakWithCouplingConstant(peak: Multiplet, isGeneral?: boolean) {
+export function isMultiplePeakWithJ(peak: Multiplet, isGeneral?: boolean) {
   const multiplePeakLookup: Multiplet[] = isGeneral
     ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq']
     : ['d', 't', 'q'];
@@ -119,13 +96,13 @@ export function isMultiplePeak(peak: Multiplet) {
   return peak === 'm';
 }
 
-export function handleNMRData(type: Nucleo, thisArg: any, isStrict: boolean): ParsedData | null {
+export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): ParsedData | null {
   thisArg.matchedData = getDataArray(thisArg.inputtedData, type, isStrict);
   if (thisArg.matchedData === null) {
     thisArg.renderError(thisArg.errMsg.dataErr);
     return null;
   }
-  const splittedDataArray = splitDataArray(thisArg.matchedData, isStrict);
+  const splittedDataArray = splitDataArray(thisArg.matchedData, type, isStrict);
   const describerArr: string[] = getDescriberArray(splittedDataArray);
   const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr, isStrict);
   if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
@@ -155,15 +132,15 @@ export function getDataArray(data: string, type: Nucleo, isStrict: boolean): str
   let nmrReg: RegExp;
   switch (type) {
     case 'H': { 
-      nmrReg = nmrRegex.h1Reg[Number(isStrict)];
+      nmrReg = nmrRegex.h1[Number(isStrict)];
       break;
     }
     case 'C': { 
-      nmrReg = nmrRegex.c13Reg[Number(isStrict)];
+      nmrReg = nmrRegex.c13[Number(isStrict)];
       break;
     }
     default: { // falls back to 1H NMR on default
-      nmrReg = nmrRegex.h1Reg[Number(isStrict)];
+      nmrReg = nmrRegex.h1[Number(isStrict)];
       break;
     }
   }
@@ -191,10 +168,11 @@ export function getDataArray(data: string, type: Nucleo, isStrict: boolean): str
  * @param {string[]} dataArr 
  * @returns 
  */
-function splitDataArray(dataArr: string[], isStrict: boolean) {
+function splitDataArray(dataArr: string[], type: Nucleo,isStrict: boolean) {
   const trimmedData = map(dataArr, datum => trimEnd(datum, ' ,.; ，。；'));
+  const splitReg = type === 'H' ? nmrRegex.h1Split : nmrRegex.c13Split;
   return map(trimmedData, (datum) => {
-    return split(datum, nmrRegex.splitData[Number(isStrict)]);
+    return split(datum, splitReg[Number(isStrict)]);
   });
 }
 
