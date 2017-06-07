@@ -57,6 +57,7 @@ export class AppComponent {
    * @memberof AppComponent
    */
   private handle() {
+    this.reset();
     const c13Data = C13Component.getInstance.handle();
     const hrmsData = HrmsComponent.getInstance.handle();
     const h1Data = H1Component.getInstance.handle();
@@ -67,7 +68,19 @@ export class AppComponent {
     this.render(<ComponentData[]>componentsData);
   }
 
-
+  /**
+   * reset output and error strings
+   * 
+   * @private
+   * 
+   * @memberof AppComponent
+   */
+  private reset() {
+    if (this.$input.value === '') {
+      clearDOMElement('#error');
+      clearDOMElement('#output');
+    }
+  }
   /**
    * render received data to screen
    * 

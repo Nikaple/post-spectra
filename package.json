@@ -6,6 +6,7 @@
   "scripts": {
     "start": "webpack-dev-server",
     "build": "webpack",
+    "prod": "webpack -p",
     "test": "karma start",
     "test-watch": "karma start --no-single-run --auto-watch",
     "lint": "tslint -c tslint.json src/**/*.ts --fix"
