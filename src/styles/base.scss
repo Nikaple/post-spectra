@@ -1,88 +1,11 @@
 @import '../../node_modules/normalize.css/normalize.css';
-@import 'tooltip';
+@import '../../node_modules/github-fork-ribbon-css/gh-fork-ribbon.css';
+@import '../../node_modules/github-fork-ribbon-css/gh-fork-ribbon.ie.css';
 @import 'mixin';
+@import 'media';
+@import 'reset';
+@import 'tooltip';
 @import 'scrollbar';
-$header-background: #444444;
-$header-textcolor: #fefefe;
-$textarea-background: #F9F9F5;
-$textarea-textcolor: #2C3E50;
-$output-background: #F9F9F5;
-$output-textcolor: #2C3E50;
-html,
-body {
-    font-family: "Microsoft Yahei", "Arial", sans-serif;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    height: 100%;
-}
-
-.header {
-    .star-container {
-        position: absolute;
-        right: 12px;
-        top: 15px;
-    }
-    background-image: url("../asset/header-bg.png");
-    color: $header-textcolor;
-    width: 100%;
-    height: 15%;
-    padding: .5rem;
-    position: relative;
-    text-align: center;
-    .app-title {
-        font-size: 2rem;
-        // padding-bottom: 1.5rem;
-    }
-    .checkbox-wrapper {
-        margin: 0 auto;
-        font-size: 1rem;
-    }
-}
-
-.main-wrapper {
-    width: 100%;
-    height: 85%;
-    overflow-y: hidden;
-    .input-container {
-        @include container-base;
-        .input-textarea {
-            color: $textarea-textcolor;
-            background-color: $textarea-background;
-            width: 100%;
-            height: 100%;
-            padding: 1rem;
-            font-size: 1rem;
-            line-height: 1.5;
-            border-style: none;
-            border-color: transparent;
-            overflow-y: scroll;
-            overflow-x: hidden;
-            resize: none;
-            outline: none;
-            &:focus {
-                border: none;
-                outline: none;
-            }
-        }
-    }
-    .output-container {
-        @include container-base;
-        background-color: $output-background;
-        color: $output-textcolor;
-        overflow-y: scroll;
-        .output-wrapper {
-            padding: 1rem;
-            font-size: 1rem;
-            line-height: 1.5;
-        }
-    }
-}
+@import 'constants';
+@import 'header';
+@import 'main';

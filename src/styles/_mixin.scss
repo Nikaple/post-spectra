@@ -1,4 +1,5 @@
 @mixin container-base {
+  position: relative;
   width: 50%;
   height: 100%;
   float: left;

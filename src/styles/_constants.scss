@@ -1,0 +1,15 @@
+@import 'media';
+
+$header-background: #444444;
+$header-textcolor: #fefefe;
+
+$header-height: 9rem;
+@include screen-tiny {
+  $header-height: 7rem;
+}
+
+
+$textarea-background: #F9F9F5;
+$textarea-textcolor: #2C3E50;
+$output-background: #F9F9F5;
+$output-textcolor: #2C3E50;

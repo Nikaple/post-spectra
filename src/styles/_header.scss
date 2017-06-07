@@ -1,0 +1,53 @@
+@import 'media';
+
+.header {
+    .fork-me {
+        top: -.5rem;
+        left: -3rem;
+        height: 15rem;
+        border: 0;
+        &:before {
+            background-color: #333;
+        }
+        display: block;
+        @include screen-tiny {
+            display: none;
+        }
+    }
+    background-image: url("../asset/header-bg.png");
+    color: $header-textcolor;
+    width: 100%;
+    min-height: $header-height;
+    padding: 1rem;
+    position: relative;
+    text-align: center;
+    clear: both;
+    .app-title {
+        position: relative;
+        font-size: 2.5rem;
+        padding-top: 1rem;
+        padding-bottom: 1.5rem;
+        @include screen-tiny {
+            font-size: 1.8rem;
+            padding-top: 2rem;
+        }
+        @include screen-small {
+            font-size: 2rem;
+        }
+    }
+    .checkbox-wrapper {
+        display: block;
+        @include screen-tiny {
+            display: none;
+        }
+        position: relative;
+        font-size: 1rem;
+        .h1-checkbox {
+            margin-left: 2rem;
+            &:first-child {
+                margin-left: 0;
+            }
+        }
+    }
+}
+

@@ -1,0 +1,40 @@
+.main-wrapper {
+    width: 100%;
+    position: absolute;
+    top: $header-height;
+    bottom: 0;
+    overflow-y: hidden;
+    .input-container {
+        @include container-base;
+        .input-textarea {
+            color: $textarea-textcolor;
+            background-color: $textarea-background;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-style: none;
+            border-color: transparent;
+            overflow-y: scroll;
+            overflow-x: hidden;
+            resize: none;
+            outline: none;
+            &:focus {
+                border: none;
+                outline: none;
+            }
+        }
+    }
+    .output-container {
+        @include container-base;
+        background-color: $output-background;
+        color: $output-textcolor;
+        overflow-y: scroll;
+        .output-wrapper {
+            padding: 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+    }
+}

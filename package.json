@@ -1,6 +1,6 @@
 {
   "name": "chem-si-helper",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "A simple project to help writing supporting information easier",
   "main": "dist/index.html",
   "scripts": {
@@ -39,8 +39,8 @@
     "webpack-dev-server": "^2.4.2"
   },
   "dependencies": {
+    "github-fork-ribbon-css": "^0.2.1",
     "lodash": "^4.17.4",
-    "normalize.css": "^7.0.0",
-    "purecss": "^0.6.2"
+    "normalize.css": "^7.0.0"
   }
 }
