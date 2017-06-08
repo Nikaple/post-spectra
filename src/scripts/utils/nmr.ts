@@ -110,7 +110,6 @@ export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): Pa
   const splittedDataArray = splitDataArray(thisArg.matchedData, type, isStrict);
   const rawTailArr = map(splittedDataArray, last);
   const tailArr = parseTailData(rawTailArr, isStrict);
-  console.log('tailArr ', tailArr);
   const describerArr: string[] = getDescriberArray(splittedDataArray);
   const metadataArr: (Metadata|null)[] = parseMetadata(describerArr, isStrict);
   if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
