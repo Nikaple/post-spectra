@@ -75,3 +75,7 @@ export function copyFormattedStrToClipboard(str: string) {
     e.preventDefault();
   }
 }
+
+export function escapeSpace(str: string) {
+  return str.replace(/ /g, '&nbsp;');
+}
