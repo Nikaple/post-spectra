@@ -3,7 +3,7 @@ import { clearDOMElement,
 import { some, split, map, 
   forEach, clone, every, replace,
   slice, join, chain,
-  compact } from 'lodash';
+  compact, includes } from 'lodash';
 import { ComponentData, solventsInfo } from './utils/constants';
 import { Multiplet, Metadata, H1Data,
   H1RenderObj, handleNMRData, getDataArray,
@@ -224,12 +224,13 @@ export class H1Component {
       return peakObj;
     }
     let formattedPeak = '';
-    if (peakObj.peak !== peakRangePlaceholder) {
+    // if the peak is not PEAKRANGE, and do not contain danger/warning
+    if (peakObj.peak !== peakRangePlaceholder && peakObj.peak[0] !== '<') {
       formattedPeak = (typeof peakObj.peak === 'string')
       ? Number(peakObj.peak).toFixed(2)
       : `${Number(peakObj.peak[0]).toFixed(2)}–${Number(peakObj.peak[1]).toFixed(2)}`;
     } else {
-      formattedPeak = peakRangePlaceholder;
+      formattedPeak = peakObj.peak as string;
     }
     const rendeDangerPeak = this.renderOnCondition(
       peakObj.danger,
@@ -309,20 +310,34 @@ export class H1Component {
         hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(/ *[–−-] */g);
-      const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
-      const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
-      const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
-      return {
-        peak,
-        danger,
-        errMsg,
-        peakType: nonCouplingMatch[3] as Multiplet,
-        Js: null,
-        hydrogenCount: +nonCouplingMatch[4],
-      };
+      const splitReg = / *[–−-] */;
+      const hyphen = (<RegExpMatchArray>nonCouplingMatch[1].match(splitReg)) || [''];
+      const peakArr = nonCouplingMatch[1].split(splitReg);
+      const validHyphen = ['–', ' – ', '−', ' − ', ' - '];
+      let peak;
+      if (this.isStrict && !includes(validHyphen, hyphen[0]) && hyphen[0] !== '') {
+        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式错误');
+        return {
+          peak,
+          peakType: nonCouplingMatch[3] as Multiplet,
+          Js: null,
+          hydrogenCount: +nonCouplingMatch[4],
+        };
+      } else {
+        peak = peakArr.length === 1 ? peakArr[0] : peakArr;
+        const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
+        const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
+        return {
+          peak,
+          danger,
+          errMsg,
+          peakType: nonCouplingMatch[3] as Multiplet,
+          Js: null,
+          hydrogenCount: +nonCouplingMatch[4],
+        };
+      }
     } else {
-      return `<span class="danger-text" data-tooltip="数据有误">${data}</span>`;
+      return highlightData(`${data})`, HighlightType.Danger, '格式有误');
     }
   }
 

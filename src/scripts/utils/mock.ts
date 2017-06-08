@@ -13,18 +13,22 @@ const mockH1Head = [
 ];
 const mockH1Peak = [
   '15.91 (s, 1H)',
-  '15.71 (s, J = 2.2 Hz, 2H)',
-  '15.51 - 15.44 (s, 3H)',
-  '15.31 (d, J = 7.7 Hz, 1H)',
-  '15.21 (d, 1H)',
-  '15.11 - 14.99 (t, J = 6.6 Hz, 2H)',
-  '15.01 - 15.00 (d, J = 12.0 Hz, 3H)',
-  '14.91 (m, 1H)',
-  '14.51 - 14.71 (m, 3H)',
-  '14.31 – 14.29 (m, 1H)',
-  '14.11 (dd, J = 12.1, 2.3 Hz, 3H)',
-  '13.91 (dd, J = 4.2 Hz, 3H)',
-  '12.71 (qq, J = 12.1, 2.3 Hz, 3H)',
+  '15.81(s, 1H)',
+  '15.71(s,1H)',
+  '15.61  (s,  1H)',
+  '15.51 (s, 88H)',
+  '15.41 (s, J = 2.2 Hz, 2H)',
+  '14.91 - 14.94 (s, 3H)',
+  '14.41 (d, J = 7.7 Hz, 1H)',
+  '13.91 (d, 1H)',
+  '13.41 - 13.29 (t, J = 6.6 Hz, 2H)',
+  '12.91 - 12.90 (d, J = 12.0 Hz, 3H)',
+  '11.91 (m, 1H)',
+  '11.41 - 11.61 (m, 3H)',
+  '10.91 – 10.29 (m, 1H)',
+  '10.41 (dd, J = 12.1, 2.3 Hz, 3H)',
+  '9.91 (dd, J = 4.2 Hz, 3H)',
+  '9.41 (qq, J = 12.1, 2.3 Hz, 3H)',
 ];
 
 export const mockH1Data = mockH1Peak
@@ -41,7 +45,23 @@ const mockC13Head = [
   '13C NMR (100 MHz, d2o) δ ',
 ];
 
-const mockC13Peak = fill(Array(400), 0).map(data => (160 * Math.random()).toFixed(2));
+const mockC13Peak = fill(Array(400), 0).map((data) => {
+  const rnd = Math.random();
+  let head;
+  if (rnd < 0.7) {
+    head = (160 * Math.random()).toFixed(2);
+  } else if (rnd < 0.85) {
+    head = (160 * Math.random()).toFixed(1);
+  } else {
+    head = (160 * Math.random()).toFixed(1);
+  }
+  const dataTail = ['()', '(1)', '(2C)', '6C)'];
+  let tail = '';
+  if (Math.random() < 0.5) {
+    tail = dataTail[Math.floor(dataTail.length * Math.random())] ;
+  }
+  return head + tail;
+});
 
 export const mockC13Data = mockC13Head
 .map((head) => {
@@ -56,23 +76,53 @@ export const mockMassData = {
   yield: '50',
 };
 
-export const mockRealData = `(6-methyl-3-phenylquinolin-2-yl)(phenyl)methanone (4a)
-Yield 72%; 232.8 mg; yellow solid; mp 94–96℃; IR (KBr): 1673, 1618, 1198, cm–1; 1H NMR (600 MHz, CDCl3) δ 8.18 (s, 1H), 8.07 (d, J = 8.4 Hz, 1H), 7.87 (d, J = 7.8 Hz, 2H), 7.69 (s, 1H), 7.61 (d, J = 8.4 Hz, 1H),7.53 (t, J = 7.8 Hz, 1H), 7.41- 7.37 (m, 4H), 7.33 – 7.28 (m, 3H), 2.59 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 195.2, 155.3, 144.6, 138.1, 137.9, 136.5, 136.2, 134.0, 133.5, 132.5, 130.5, 129.3, 128.9, 128.6, 128.4, 128.1, 127.8, 126.5, 21.8 . HRMS (ESI): m/z [M+H]+ calcd for C23H18NO: 324.1383; found: 324.1379.
+export const mockRealData = `(6-methyl-3-phenylquinolin-2-yl)(phenyl)methanone (4a)\
+Yield 72%; 232.8 mg; yellow solid; mp 94–96℃; IR (KBr): 1673, 1618, 1198, cm–1; 1H NMR (600 MHz, \
+CDCl3) δ 8.18 (s, 1H), 8.07 (s,1H), 7.87(s, 2H), 7.69 (s, 1H), 7.61 (d, \
+J = 8.4 Hz, 1H),7.53 (t, J = 7.8 Hz, 1H), 7.41- 7.37 (m, 4H), 7.33 – 7.28 (m, 3H), 2.59 (s, 3H). \
+13C NMR (150 MHz, CDCl3) δ 195.2, 155.3, 144.6, 138.1, 137.9, 136.5, 136.2, 134.0, 133.5, 132.5,\
+ 130.5, 129.3, 128.9, 128.6, 128.4, 128.1, 127.8, 126.5, 21.8 . HRMS (ESI): m/z [M+H]+ calcd for\
+  C23H18NO: 324.1383; found: 324.1379.
  
 (6-methyl-3-phenylquinolin-2-yl)(p-tolyl)methanone (4b) 
-Yield 65%;219.3 mg; yellow solid; mp 63–65℃; IR (KBr): 1168, 1603, 904,829, 757, 738, 700 cm–1; 1H NMR (600 MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 8.4 Hz, 1H), 7.77 (d, J = 7.8 Hz, 2H), 7.65 (s, 1H), 7.57 (d, J = 8.4 Hz, 1H), 7.38 (d, J = 6.6 Hz, 2H), 7.32 – 7.23 (m, 3H), 7.17 (d, J = 8.4 Hz, 2H), 2.55 (s, 3H), 2.35 (s, 3H).  13C NMR (150 MHz, CDCl3) δ 194.8, 155.5, 144.5, 144.3, 137.91, 137.87, 136.3, 133.9, 133.7, 132.3, 130.5, 129.2, 129.0, 128.9, 128.5, 128.0, 127.7, 126.4, 21.72, 21.65 ; HRMS(ESI): m/z [M+H]+ calcd for C24H20NO: 338.1539; found: 338.1537.
+Yield 65%;219.3 mg; yellow solid; mp 63–65℃; IR (KBr): 1168, 1603, 904,829, 757, 738, 700 cm–1; \
+1H NMR (600 MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 8.4 Hz, 1H), 7.77 (d, J = 7.8 Hz, 2H), 7.65 (\
+s, 1H), 7.57 (d, J = 8.4 Hz, 1H), 7.38 (d, J = 6.6 Hz, 2H), 7.32 – 7.23 (m, 3H), 7.17 (d, J = 8.\
+4 Hz, 2H), 2.55 (s, 3H), 2.35 (s, 3H).  13C NMR (150 MHz, CDCl3) δ 194.8, 155.5, 144.5, 144.3\
+, 137.91, 137.87, 136.3, 133.9, 133.7, 132.3, 130.5, 129.2, 129.0, 128.9, 128.5, 128.0, 127.7\
+, 126.4, 21.72, 21.65 ; HRMS(ESI): m/z [M+H]+ calcd for C24H20NO: 338.1539; found: 338.1537.
  
 (4-methoxyphenyl)(6-methyl-3-phenylquinolin-2-yl)methanone (4c)
-Yield 69%; 243.8 mg; yellow oil; IR (KBr): 1662, 1593, 1317,1264, 1153, 703 cm–1; 1H NMR (600 MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 9.0 Hz, 1H), 7.85 (d, J = 9.0 Hz, 2H), 7.65 (s, 1H), 7.57 (d, J = 8.4 Hz, 1H), 7.39 (d, J = 7.2 Hz, 2H), 7.32 – 7.26 (m, 3H), 6.85 (d, J = 8.4 Hz, 2H), 3.80 (s, 3H), 2.55 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.8, 163.7, 155.6, 144.5, 137.9, 137.8, 136.3, 133.8, 132.8, 132.3, 129.3, 129.1, 128.8, 128.4, 128.0, 127.7, 126.4, 113.6, 55.4, 21.7 , HRMS(ESI): m/z [M+H]+ calcd for C24H20NO2:354.1489; found: 354.1483.
+Yield 69%; 243.8 mg; yellow oil; IR (KBr): 1662, 1593, 1317,1264, 1153, 703 cm–1; 1H NMR (600 \
+MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 9.0 Hz, 1H), 7.85 (d, J = 9.0 Hz, 2H), 7.65 (s, 1H), \
+7.57 (d, J = 8.4 Hz, 1H), 7.39 (d, J = 7.2 Hz, 2H), 7.32 – 7.26 (m, 3H), 6.85 (d, J = 8.4 Hz, \
+2H), 3.80 (s, 3H), 2.55 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.8, 163.7, 155.6, 144.5, 137.\
+9, 137.8, 136.3, 133.8, 132.8, 132.3, 129.3, 129.1, 128.8, 128.4, 128.0, 127.7, 126.4, 113\
+.6, 55.4, 21.7 , HRMS(ESI): m/z [M+H]+ calcd for C24H20NO2:354.1489; found: 354.1483.
  
 (4-ethoxyphenyl)(6-methyl-3-phenylquinolin-2-yl)methanone (4d)
-Yield 65%; 238.8 mg; yellow oil; IR (KBr): 1664, 1597, 1257,1150, 699 cm–1; 1H NMR (600 MHz, CDCl3) δ 8.16 (s, 1H), 8.06 (d, J = 9.0 Hz, 1H), 7.84 (d, J = 9.0 Hz, 2H), 7.67 (s, 1H), 7.60 (d, J = 8.4 Hz, 1H), 7.39 (d, J = 7.2 Hz, 2H), 7.33 – 7.28 (m, 3H), 6.85 (d, J = 9.0 Hz, 2H), 4.09 – 4.04 (m, 2H), 2.59 (s, 3H), 1.42 (t, J = 7.2 Hz, 3H).  13C NMR (150 MHz, CDCl3) δ 193.9, 163.3, 155.8, 144.6, 138.0, 137.9, 136.4, 133.9, 132.9, 132.4, 129.2, 129.1, 128.9, 128.5, 128.1, 127.8, 126.5, 114.1, 63.7, 21.7, 14.6  , HRMS(ESI): m/z [M+H]+ calcd for C25H22NO2: 368.1645; found: 368.1639.
+Yield 65%; 238.8 mg; yellow oil; IR (KBr): 1664, 1597, 1257,1150, 699 cm–1; 1H NMR (600 MHz\
+, CDCl3) δ 8.16 (s, 1H), 8.06 (d, J = 9.0 Hz, 1H), 7.84 (d, J = 9.0 Hz, 2H), 7.67 (s, 1H),\
+ 7.60 (d, J = 8.4 Hz, 1H), 7.39 (d, J = 7.2 Hz, 2H), 7.33 – 7.28 (m, 3H), 6.85 (d, J = 9.0 H\
+ z, 2H), 4.09 – 4.04 (m, 2H), 2.59 (s, 3H), 1.42 (t, J = 7.2 Hz, 3H).  13C NMR (150 MHz, CDCl3)\
+  δ 193.9, 163.3, 155.8, 144.6, 138.0, 137.9, 136.4, 133.9, 132.9, 132.4, 129.2, 129.1, 128.9, 12\
+8.5, 128.1, 127.8, 126.5, 114.1, 63.7, 21.7, 14.6  , HRMS(ESI): m/z [M+H]+ calcd for C25H22\
+NO2: 368.1645; found: 368.1639.
 
 benzo[d][1,3]dioxol-5-yl(6-methyl-3-phenylquinolin-2-yl)methanone (4e)
-Yield 63%; 231.5mg; yellow solid; mp 72–74℃; IR (KBr): 1662, 1486, 1443,1264, 1240, 744 cm–1; 1H NMR (600 MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 8.4 Hz, 1H), 7.65 (s, 1H), 7.58 (d, J = 8.4 Hz, 1H), 7.40 (s, 1H), 7.38 (d, J = 7.8 Hz, 3H), 7.33 – 7.28 (m, 3H), 6.74 (d, J = 7.8 Hz, 1H), 5.98 (s, 2H), 2.56 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.4, 155.4, 152.2, 148.0, 144.5, 138.0, 137.9, 136.4, 133.8, 132.4, 131.0, 129.1, 128.8, 128.5, 128.0, 127.9, 127.8, 126.4, 109.3, 107.8, 101.8, 21.7  ; HRMS(ESI): m/z [M+H]+ calcd for C24H18NO3: 368.1281; found: 368.1286.
+Yield 63%; 231.5mg; yellow solid; mp 72–74℃; IR (KBr): 1662, 1486, 1443,1264, 1240, 744 cm–1; 1H\
+ NMR (600 MHz, CDCl3) δ 8.14 (s, 1H), 8.05 (d, J = 8.4 Hz, 1H), 7.65 (s, 1H), 7.58 (d, J = 8.4 Hz\
+ , 1H), 7.40 (s, 1H), 7.38 (d, J = 7.8 Hz, 3H), 7.33 – 7.28 (m, 3H), 6.74 (d, J = 7.8 Hz, 1H), 5.98\
+  (s, 2H), 2.56 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.4, 155.4, 152.2, 148.0, 144.5, 138.0, 137.9\
+  , 136.4, 133.8, 132.4, 131.0, 129.1, 128.8, 128.5, 128.0, 127.9, 127.8, 126.4, 109.3, 107.8, \
+  101.8, 21.7  ; HRMS(ESI): m/z [M+H]+ calcd for C24H18NO3: 368.1281; found: 368.1286.
  
 (6-methyl-3-phenylquinolin-2-yl)(4-nitrophenyl)methanone (4f)
-Yield 68%; 250.5 mg; yellow solid; mp 203–205℃; IR (KBr): 1682, 1517, 1345,700, cm–1; 1H NMR (600 MHz, CDCl3) δ 8.24 (d, J = 8.4 Hz, 2H), 8.21 (s, 1H), 8.05 (d, J = 8.4 Hz, 3H), 7.71 (s, 1H), 7.64 (d, J = 8.4 Hz, 1H), 7.36 – 7.31 (m, 5H), 2.61 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.2, 153.7, 150.2, 144.6, 141.0, 138.9, 137.6, 136.9, 134.3, 132.9, 131.3, 129.3, 128.9, 128.7, 128.4, 128.1, 126.5, 123.5, 21.8. HRMS(ESI): m/z [M+H]+ calcd for C23H17N2O3: 369.1234; found: 369.1236.
+Yield 68%; 250.5 mg; yellow solid; mp 203–205℃; IR (KBr): 1682, 1517, 1345,700, cm–1; 1H NMR (600\
+ MHz, CDCl3) δ 8.24 (d, J = 8.4 Hz, 2H), 8.21 (s, 1H), 8.05 (d, J = 8.4 Hz, 3H), 7.71 (s, 1H), 7.64\
+  (d, J = 8.4 Hz, 1H), 7.36 – 7.31 (m, 5H), 2.61 (s, 3H). 13C NMR (150 MHz, CDCl3) δ 193.2, 153.7,\
+   150.2, 144.6, 141.0, 138.9, 137.6, 136.9, 134.3, 132.9, 131.3, 129.3, 128.9, 128.7, 128.4, 128.1\
+   , 126.5, 123.5, 21.8. HRMS(ESI): m/z [M+H]+ calcd for C23H17N2O3: 369.1234; found: 369.1236.
  
 (6-methyl-3-phenylquinolin-2-yl)(3-nitrophenyl)methanone(4g)
 Yield 63%; 232.1 mg; yellow solid; mp 88–90℃; IR (KBr): 1668, 903, 701 cm–1; 1H NMR (600 MHz, CDCl3) δ 8.17 (s, 1H), 8.06 (d, J = 8.4 Hz, 1H), 7.87 (d, J = 7.8 Hz, 2H), 7.67 (s, 1H), 7.60 (d, J = 8.4 Hz, 1H), 7.52 (t, J = 7.2 Hz, 1H), 7.39 (t, J = 7.2 Hz, 4H), 7.31 (t, J = 7.2 Hz, 2H), 2.58 (s, 3H).  13C NMR (150 MHz, CDCl3) δ 195.2, 155.3, 144.6, 138.1, 137.9, 136.4, 136.2, 134.0, 133.4, 132.5, 130.4, 129.3, 129.2, 128.9, 128.5, 128.3, 128.1, 127.9,127.8, 126.5, 21.7. HRMS(ESI): m/z [M+H]+ calcd for C22H14N2O3: 354.0999; found: 354.0992.\n

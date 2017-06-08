@@ -251,19 +251,13 @@ function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|nul
     const nucleo = datum.match(nmrRegex.nucleo[Number(isStrict)]);
     const freq = datum.match(nmrRegex.freq[Number(isStrict)]);
     const solvent = datum.match(nmrRegex.solvent[Number(isStrict)]);
-    // const tail = datum.match(nmrRegex.tail[Number(isStrict)]);
     if (!nucleo || !freq || !solvent) {
       return null;
     }
-    // let tailVal = '';
-    // if (tail[0] !== '.' && tail[0] !== ';' && isStrict) {
-    //   tailVal = highlightData(tail[0], HighlightType.Danger, '数据格式不对');
-    // }
     return {
       type: (nucleo[1] || nucleo[2]) as Nucleo,
       freq: +freq[1],
       solvent: solvent[1].toLowerCase(),
-      // tail: tailVal,
     };
   });
 }
@@ -271,7 +265,7 @@ function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|nul
 function parseTailData(tailArr: string[], isStrict: boolean): string[] {
   return map(tailArr, (tail) => {
     if (tail !== '.' && tail !== ';' && isStrict) {
-      return highlightData(tail, HighlightType.Danger, '数据格式不对');
+      return highlightData(tail, HighlightType.Danger, '格式有误');
     }
     return tail;
   });

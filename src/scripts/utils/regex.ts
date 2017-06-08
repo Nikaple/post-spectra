@@ -19,7 +19,7 @@ const h1RegStrict = h1Reg;
 // match c13data
 const c13Head = '13C NMR.+?';
 const c13MHz = 'MHz.+?';
-const c13Optional = '(\\(\\d+C?\\))?';
+const c13Optional = '(\\(\\d*C?\\))?';
 
 const c13Reg = new RegExp(
 `${c13Head}${c13MHz}${peak}${c13Optional}${dataTail}${negative}`, 'g');
@@ -80,13 +80,13 @@ const h1PeakWithJsStrict = new RegExp(
 
 // match 7.80 - 7.55 (m, 3H)
 const hyphen = ' *[–−-] *';
-const hyphenStrict = ' [–−-] ';
 const parenthesisLeft = ' *\\( *';
 const parenthesisLeftStrict = ' \\(';
 const h1PeakWithoutJs = new RegExp(
 `(${peak}(${hyphen}${peak})?)${parenthesisLeft}(\\w+)${comma}(?:${hydrogenCount})`);
+
 const h1PeakWithoutJsStrict = new RegExp(
-`(${h1PeakStrict}(${hyphenStrict}${h1PeakStrict})?)${parenthesisLeftStrict}` + 
+`(${h1PeakStrict}(${hyphen}${h1PeakStrict})?)${parenthesisLeftStrict}` + 
 `(\\w+)${commaStrict}(?:${hydrogenCount})`);
 
 interface RegExes {

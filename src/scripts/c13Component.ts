@@ -1,5 +1,5 @@
 import { clearDOMElement, highlightData } from './utils/utils';
-import { chain, map, split, clone, remove, forEach, round, join, initial } from 'lodash';
+import { chain, map, split, clone, remove, forEach, round, join, trimEnd } from 'lodash';
 import {
   Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
@@ -63,7 +63,7 @@ export class C13Component {
       });
     });
     const fixedPeakData: C13Data[][] = map(peakDataCopy, (peakDatum) => {
-      return map(initial(peakDatum), this.fixPeaks);
+      return map(peakDatum, this.fixPeaks);
     });
     return this.render(metadataArr, fixedPeakData, deletedPeaks, tailArr);
   }
@@ -120,6 +120,7 @@ export class C13Component {
       const peakStr = obj.peak.join(', ');
       const tailStr = obj.tail;
       const highlightedData = headStr + peakStr + tailStr;
+
       let type: HighlightType;
       let errMsg = '';
       if (deletedPeaks[index].length !== 0) {
@@ -186,11 +187,14 @@ export class C13Component {
     if (peak === null) {
       return highlightData('数据有误', HighlightType.Danger);
     }
+    if (isNaN(Number(peak[peak.length - 1]))) {
+      peak = trimEnd(peak, ' ,.;，。；');
+    }
     // for peaks like '5.2(0) and 13.1(4C)'
-    const peakExecArr = /(\d+\.\d*)(\(\d+C?\))?/.exec(peak) as RegExpExecArray;
-    // if (!peakExecArr) {
-    //   return 
-    // }
+    const peakExecArr = /(\d+\.\d*)(\(\d+C?\))?$/.exec(peak) as RegExpExecArray;
+    if (!peakExecArr) {
+      return highlightData(peak, HighlightType.Danger, '数据有误');
+    }
     const peakStr = peakExecArr[1];
     const peakInfo = peakExecArr[2] || '';
     if (isNaN(Number(peakStr))) {
