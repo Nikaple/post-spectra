@@ -7,6 +7,7 @@
     .input-container {
         @include container-base;
         .input-textarea {
+            font-family: "Microsoft Yahei", "微软雅黑", Arial, sans-serif; 
             color: $textarea-textcolor;
             background-color: $textarea-background;
             width: 100%;
