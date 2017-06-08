@@ -1,8 +1,8 @@
 import { clearDOMElement,
-  highlightData } from './utils/utils';
+  highlightData, escapeSpace } from './utils/utils';
 import { some, split, map, 
   forEach, clone, every, replace,
-  slice, join, chain,
+  slice, join, chain, endsWith,
   compact, includes } from 'lodash';
 import { ComponentData, solventsInfo } from './utils/constants';
 import { Multiplet, Metadata, H1Data,
@@ -313,10 +313,10 @@ export class H1Component {
       const splitReg = / *[–−-] */;
       const hyphen = (<RegExpMatchArray>nonCouplingMatch[1].match(splitReg)) || [''];
       const peakArr = nonCouplingMatch[1].split(splitReg);
-      const validHyphen = ['–', ' – ', '−', ' − ', ' - '];
+      const validHyphen = ['–', ' – ', '−', ' − ', ' - ', '-'];
       let peak;
       if (this.isStrict && !includes(validHyphen, hyphen[0]) && hyphen[0] !== '') {
-        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式错误');
+        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式有误');
         return {
           peak,
           peakType: nonCouplingMatch[3] as Multiplet,
@@ -337,7 +337,11 @@ export class H1Component {
         };
       }
     } else {
-      return highlightData(`${data})`, HighlightType.Danger, '格式有误');
+      if (endsWith(data, 'H')) {
+        data = data + ')';
+      }
+      // escape space here.
+      return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
     }
   }
 

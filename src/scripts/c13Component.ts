@@ -1,5 +1,6 @@
 import { clearDOMElement, highlightData } from './utils/utils';
-import { chain, map, split, clone, remove, forEach, round, join, trimEnd } from 'lodash';
+import { chain, map, split, clone, remove, forEach,
+  round, join, trimEnd, last, initial } from 'lodash';
 import {
   Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
@@ -49,7 +50,11 @@ export class C13Component {
     if (parsedData === null) {
       return null;
     }
-    const peakData: C13Data[][] = parsedData.peakData as C13Data[][];
+    const rawPeakData: C13Data[][] = parsedData.peakData as C13Data[][];
+    const peakData: C13Data[][] = map(rawPeakData, (peakArr: string[]) => {
+      const lastPeak = trimEnd(last(peakArr), ' ,.;，。；') as C13Data;
+      return [...initial(peakArr), lastPeak] as C13Data[];
+    });
     const originalMetadataArr: Metadata[] = parsedData.metadataArr as Metadata[];
     const tailArr = parsedData.tailArr;
     const metadataArr: Metadata[] = map(originalMetadataArr, (metadata) => {
@@ -186,9 +191,6 @@ export class C13Component {
   private fixPeaks(peak: C13Data, index: number, data: C13Data[]): C13Data {
     if (peak === null) {
       return highlightData('数据有误', HighlightType.Danger);
-    }
-    if (isNaN(Number(peak[peak.length - 1]))) {
-      peak = trimEnd(peak, ' ,.;，。；');
     }
     // for peaks like '5.2(0) and 13.1(4C)'
     const peakExecArr = /(\d+\.\d*)(\(\d+C?\))?$/.exec(peak) as RegExpExecArray;
