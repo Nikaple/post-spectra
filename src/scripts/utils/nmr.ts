@@ -4,7 +4,8 @@ import { nmrRegex } from './regex';
 import { highlightData } from './utils';
 
 export type Nucleo = 'H'|'C';
-export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
+export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
+  |'br s'|'br d'|'brs'|'brd';
 export type C13Data = string|null;
 
 export enum HighlightType {
@@ -59,7 +60,7 @@ export interface C13RenderObj {
  */
 export function isPeak(peak: Multiplet) {
   const peakLookup: Multiplet[] = ['s', 'd', 't', 'q', 'dd', 'dt', 'td',
-    'ddd', 'ddt', 'dq', 'br', 'm'];
+    'ddd', 'ddt', 'dq', 'br', 'm', 'br s', 'br d', 'brs', 'brd'];
   return includes(peakLookup, peak);
 }
 
@@ -71,7 +72,7 @@ export function isPeak(peak: Multiplet) {
  * @returns {boolean} 
  */
 export function isSinglePeak(peak: Multiplet): boolean {
-  const singlePeakLookup: Multiplet[] = ['s', 'br'];
+  const singlePeakLookup: Multiplet[] = ['s', 'br', 'br s', 'brs'];
   return includes(singlePeakLookup, peak);
 }
 
@@ -85,8 +86,8 @@ export function isSinglePeak(peak: Multiplet): boolean {
  */
 export function isMultiplePeakWithJ(peak: Multiplet, isGeneral?: boolean) {
   const multiplePeakLookup: Multiplet[] = isGeneral
-    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq']
-    : ['d', 't', 'q'];
+    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq', 'brd', 'br d']
+    : ['d', 't', 'q', 'brd', 'br d'];
   return includes(multiplePeakLookup, peak);
 }
 
