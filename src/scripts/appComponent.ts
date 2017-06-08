@@ -139,7 +139,7 @@ export class AppComponent {
    */
   private onTextChange() {
     // bind event listeners
-    const $checkboxes = Array.from(document.querySelectorAll('input[name="h1-checkbox"]'));
+    const $checkboxes = Array.from(document.querySelectorAll('div.checkbox-wrapper input'));
     const $peaks = document.querySelector('#input') as HTMLTextAreaElement;
     forEach([$peaks, ...$checkboxes], (el) => {
       el.addEventListener('input', this.handle.bind(this));
