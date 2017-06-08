@@ -44,8 +44,8 @@ const c13SplitStrict = new RegExp(
   `${splitHeadAndPeakStrict}|${commaStrict}${positiveStrict}`);
 
 // determine nucleo type
-const nucleo = /1\s?H|13\s?C(?:\s?NMR)/;
-const nucleoStrict = /1H|13C(?: NMR)/;
+const nucleo = /1\s?(H)|13\s?(C)(?:\s?NMR)/;
+const nucleoStrict = /1(H)|13(C)(?: NMR)/;
 
 // determine frequency
 const freq = /(\d+) *MHz/;
@@ -54,6 +54,10 @@ const freqStrict = /(\d{2,3}) MHz/;
 // determine solvent
 const solvent = /(dmso|cdcl3|cd3od|c6d6|d2o)(?:[–−-]d\d)?/i;
 const solventStrict = solvent;
+
+// determine data tail
+const tail = new RegExp(`${dataTail}^`);
+const tailStrict = tail;
 
 // match '7.63 (d, J = 7.9, 1.2, 1.4 Hz, 1H)'
 const h1PeakStrict = '\\d{1,2}\\.\\d{2}';
@@ -98,6 +102,7 @@ export const nmrRegex: RegExes = {
   c13Split: [c13Split, c13SplitStrict],
   nucleo: [nucleo, nucleoStrict],
   freq: [freq, freqStrict],
+  tail: [tail, tailStrict],
   solvent: [solvent, solventStrict],
   h1PeakWithJs: [h1PeakWithJs, h1PeakWithJsStrict],
   h1PeakWithoutJs: [h1PeakWithoutJs, h1PeakWithoutJsStrict],

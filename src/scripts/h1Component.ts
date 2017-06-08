@@ -71,15 +71,13 @@ export class H1Component {
    */
   public handle(): ComponentData|null {
     this.reset();
-    // if (this.inputtedData === '') {
-    //   return null;
-    // }
     const parsedData = handleNMRData(this, 'H', this.isStrict);
     if (parsedData === null) {
       return null;
     }
     const peakData = parsedData.peakData;
     const metadataArr = <Metadata[]>parsedData.metadataArr;
+    const tailArr = parsedData.tailArr;
     // individual peak data objects
     const peakDataObjs = map(peakData, peakDatum =>
       map(peakDatum, data => this.parsePeakData(data)),
@@ -94,7 +92,7 @@ export class H1Component {
       const freq = (metadataArr as Metadata[])[index].freq;
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    return this.render(metadataArr, fixedPeakDataObj);
+    return this.render(metadataArr, fixedPeakDataObj, tailArr);
   }
   
   /**
@@ -114,16 +112,20 @@ export class H1Component {
    * 
    * @private
    * @param {Metadata[]} metadataArr 
-   * @param {H1Data[][]} peakDataObj 
+   * @param {H1Data[][]} peakDataObjs 
    * 
    * @memberof H1Component
    */
-  private render(metadataArr: Metadata[], peakDataObj: H1Data[][]): ComponentData {
+  private render(
+    metadataArr: Metadata[],
+    peakDataObjs: H1Data[][],
+    tailArr: string[]): ComponentData {
     const h1RenderObjs:  H1RenderObj[] = [];
     forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as H1RenderObj;
       obj.meta = metadataArr[index];
-      obj.peak = peakDataObj[index];
+      obj.peak = peakDataObjs[index];
+      obj.tail = tailArr[index];
       h1RenderObjs.push(obj);
     });
     const input = this.matchedData as string[];
@@ -166,7 +168,7 @@ export class H1Component {
         .map(this.stringifyPeakData.bind(this))
         .join(', ')
         .value();
-      const tailStr = '.';
+      const tailStr = obj.tail;
       return headStr + peakStr + tailStr;
     });
     const output = map(formattedPeakStrings, (str) => {
@@ -301,9 +303,9 @@ export class H1Component {
         .compact()
         .value();
       return {
+        Js,
         peak: couplingMatch[1],
         peakType: couplingMatch[2] as Multiplet,
-        Js,
         hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
@@ -313,11 +315,11 @@ export class H1Component {
       const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
       return {
         peak,
+        danger,
+        errMsg,
         peakType: nonCouplingMatch[3] as Multiplet,
         Js: null,
         hydrogenCount: +nonCouplingMatch[4],
-        danger,
-        errMsg,
       };
     } else {
       return `<span class="danger-text" data-tooltip="数据有误">${data}</span>`;

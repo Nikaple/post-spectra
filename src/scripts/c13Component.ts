@@ -1,5 +1,5 @@
 import { clearDOMElement, highlightData } from './utils/utils';
-import { map, split, clone, remove, forEach, round, join } from 'lodash';
+import { chain, map, split, clone, remove, forEach, round, join, initial } from 'lodash';
 import {
   Metadata, C13Data, handleNMRData,
   C13RenderObj, getDataArray, HighlightType,
@@ -51,6 +51,7 @@ export class C13Component {
     }
     const peakData: C13Data[][] = parsedData.peakData as C13Data[][];
     const originalMetadataArr: Metadata[] = parsedData.metadataArr as Metadata[];
+    const tailArr = parsedData.tailArr;
     const metadataArr: Metadata[] = map(originalMetadataArr, (metadata) => {
       metadata.freq = this.roundMetadataFreq(metadata.freq);
       return metadata;
@@ -62,9 +63,9 @@ export class C13Component {
       });
     });
     const fixedPeakData: C13Data[][] = map(peakDataCopy, (peakDatum) => {
-      return map(peakDatum, this.fixC13Peaks);
+      return map(initial(peakDatum), this.fixPeaks);
     });
-    return this.render(metadataArr, fixedPeakData, deletedPeaks);
+    return this.render(metadataArr, fixedPeakData, deletedPeaks, tailArr);
   }
   
   /**
@@ -94,12 +95,14 @@ export class C13Component {
     metadataArr: Metadata[],
     peakData: C13Data[][],
     deletedPeaks: C13Data[][],
+    tailArr: string[],
   ): ComponentData {
     const c13RenderObjs: C13RenderObj[] = [];
     forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as C13RenderObj;
       obj.meta = metadataArr[index];
       obj.peak = peakData[index];
+      obj.tail = tailArr[index];
       c13RenderObjs.push(obj);
     });
     const input = this.matchedData as string[];
@@ -115,7 +118,7 @@ export class C13Component {
       const headStr = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
         ${currentSolventInfo.formattedString}) δ `;
       const peakStr = obj.peak.join(', ');
-      const tailStr = '.';
+      const tailStr = obj.tail;
       const highlightedData = headStr + peakStr + tailStr;
       let type: HighlightType;
       let errMsg = '';
@@ -179,14 +182,27 @@ export class C13Component {
     return round(freq * decay, -1) / decay;
   }
 
-  private fixC13Peaks(peak: C13Data): C13Data {
+  private fixPeaks(peak: C13Data, index: number, data: C13Data[]): C13Data {
     if (peak === null) {
       return highlightData('数据有误', HighlightType.Danger);
     }
-    if (isNaN(Number(peak))) {
-      return highlightData(peak, HighlightType.Danger, '数据有误');
+    // for peaks like '5.2(0) and 13.1(4C)'
+    const peakExecArr = /(\d+\.\d*)(\(\d+C?\))?/.exec(peak) as RegExpExecArray;
+    // if (!peakExecArr) {
+    //   return 
+    // }
+    const peakStr = peakExecArr[1];
+    const peakInfo = peakExecArr[2] || '';
+    if (isNaN(Number(peakStr))) {
+      return highlightData(peakStr, HighlightType.Danger, '数据有误');
     }
-    return <C13Data>Number(peak).toFixed(1);
+    const peakNumber = Number(peakStr);
+    const peakWith1Decimal: C13Data = peakNumber.toFixed(1);
+    if (peakWith1Decimal === Number(data[index - 1]).toFixed(1)
+    || peakWith1Decimal === Number(data[index + 1]).toFixed(1)) {
+      return peakNumber.toFixed(2) + peakInfo;
+    }
+    return peakWith1Decimal + peakInfo;
   }
 
   private isPeakRedundant(peak: C13Data, solvent: string) {

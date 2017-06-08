@@ -1,6 +1,7 @@
-import { map, head, tail, split, some, includes, trimEnd, chain } from 'lodash';
+import { map, head, tail, split, some, includes, trimEnd, chain, last, initial } from 'lodash';
 import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
+import { highlightData } from './utils';
 
 export type Nucleo = 'H'|'C';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
@@ -16,6 +17,7 @@ export interface Metadata {
   type: Nucleo;
   freq: number;
   solvent: string;
+  tail?: string;
 }
 
 export interface H1Data {
@@ -32,16 +34,19 @@ export interface H1Data {
 export interface H1RenderObj {
   meta: Metadata;
   peak: H1Data[];
+  tail: string;
 }
 
 interface ParsedData {
   peakData: string[][];
   metadataArr: (Metadata|null)[];
+  tailArr: string[];
 }
 
 export interface C13RenderObj {
   meta: Metadata;
   peak: C13Data[];
+  tail: string;
 }
 
 
@@ -103,14 +108,18 @@ export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): Pa
     return null;
   }
   const splittedDataArray = splitDataArray(thisArg.matchedData, type, isStrict);
+  const rawTailArr = map(splittedDataArray, last);
+  const tailArr = parseTailData(rawTailArr, isStrict);
+  console.log('tailArr ', tailArr);
   const describerArr: string[] = getDescriberArray(splittedDataArray);
-  const metadataArr: (Metadata|null)[] = getMetadataFromDescriber(describerArr, isStrict);
+  const metadataArr: (Metadata|null)[] = parseMetadata(describerArr, isStrict);
   if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
     thisArg.renderError(thisArg.errMsg.infoErr);
     return null;
   }
-  const peakData: string[][] = getPeakDataArray(splittedDataArray);
-  return { peakData, metadataArr };
+  const rawPeakData = map(splittedDataArray, initial);
+  const peakData: string[][] = getPeakDataArray(rawPeakData);
+  return { peakData, metadataArr, tailArr };
 }
 
 /**
@@ -152,7 +161,7 @@ export function getDataArray(data: string, type: Nucleo, isStrict: boolean): str
 }
 
 /**
- * split complete nmr data into pieces (describer + peak data)
+ * split complete nmr data into pieces (describer + peak data + tail)
  * @example
  * // returns [[
  * // '1H NMR (400 MHz, cdcl3)',
@@ -160,19 +169,24 @@ export function getDataArray(data: string, type: Nucleo, isStrict: boolean): str
  * // '8.60 (d, J = 8.2 Hz, 1H)',
  * // '8.54 (dd, J = 7.7, 1.2 Hz, 1H)',
  * // '7.37 – 7.29 (m, 1H)'
+ * // '.'
  * // ]]
  * splitDataArray(['1H NMR (400 MHz, cdcl3) δ 11.46 (s, 1H), \
  *   8.60 (d, J = 8.2 Hz, 1H), 8.54 (dd, J = 7.7, 1.2 Hz, 1H), \
- *   7.37 – 7.29 (m, 1H)']);
+ *   7.37 – 7.29 (m, 1H).']);
  * @export
  * @param {string[]} dataArr 
  * @returns 
  */
 function splitDataArray(dataArr: string[], type: Nucleo,isStrict: boolean) {
-  const trimmedData = map(dataArr, datum => trimEnd(datum, ' ,.; ，。；'));
+  const trimmedData = map(dataArr, (datum) => {
+    const tail = datum.match(/\s*[\s,.;，。；]$/) as RegExpMatchArray;
+    trimEnd(datum, ' ,.; ，。；');
+    return { main: datum, tail: tail[0] };
+  });
   const splitReg = type === 'H' ? nmrRegex.h1Split : nmrRegex.c13Split;
   return map(trimmedData, (datum) => {
-    return split(datum, splitReg[Number(isStrict)]);
+    return [...split(datum.main, splitReg[Number(isStrict)]), datum.tail];
   });
 }
 
@@ -228,24 +242,39 @@ function getPeakDataArray(splittedDataArr: string[][]): string[][] {
  * @example
  * // returns [{
  * }]
- * getMetadataFromDescriber(['1H NMR (400 MHz, cdcl3)', '1H NMR (600 MHz, dmso)'])
+ * parseMetadata(['1H NMR (400 MHz, cdcl3)', '1H NMR (600 MHz, dmso)'])
  * @export
  * @param {string[]} describerArr 
  * @returns {((Metadata|null)[])} 
  */
-function getMetadataFromDescriber(describerArr: string[], isStrict: boolean): (Metadata|null)[] {
-  return describerArr.map((datum) => {
+function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|null)[] {
+  return map(describerArr, (datum) => {
     const nucleo = datum.match(nmrRegex.nucleo[Number(isStrict)]);
     const freq = datum.match(nmrRegex.freq[Number(isStrict)]);
     const solvent = datum.match(nmrRegex.solvent[Number(isStrict)]);
+    // const tail = datum.match(nmrRegex.tail[Number(isStrict)]);
     if (!nucleo || !freq || !solvent) {
       return null;
     }
+    // let tailVal = '';
+    // if (tail[0] !== '.' && tail[0] !== ';' && isStrict) {
+    //   tailVal = highlightData(tail[0], HighlightType.Danger, '数据格式不对');
+    // }
     return {
-      type: nucleo[1] as Nucleo,
+      type: (nucleo[1] || nucleo[2]) as Nucleo,
       freq: +freq[1],
       solvent: solvent[1].toLowerCase(),
+      // tail: tailVal,
     };
+  });
+}
+
+function parseTailData(tailArr: string[], isStrict: boolean): string[] {
+  return map(tailArr, (tail) => {
+    if (tail !== '.' && tail !== ';' && isStrict) {
+      return highlightData(tail, HighlightType.Danger, '数据格式不对');
+    }
+    return tail;
   });
 }
 

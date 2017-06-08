@@ -1,6 +1,6 @@
 {
     "name": "chem-si-helper",
-    "version": "0.8.7",
+    "version": "0.8.8",
     "description": "A simple project to help writing supporting information easier",
     "main": "dist/index.html",
     "scripts": {
