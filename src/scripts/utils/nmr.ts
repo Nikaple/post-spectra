@@ -18,7 +18,6 @@ export interface Metadata {
   type: Nucleo;
   freq: number;
   solvent: string;
-  tail?: string;
 }
 
 export interface H1Data {
