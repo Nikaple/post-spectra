@@ -1,7 +1,7 @@
 import { ComponentData, solventsInfo } from './utils/constants';
 import { handleNMRData, Metadata, H1Data, H1RenderObj,
   HighlightType, Multiplet, isSinglePeak, isMultiplePeak,
-  isPeak, isMultiplePeakWithJ, 
+  isPeak, isMultiplePeakWithJ, JCount
 } from './utils/nmr';
 import { highlightData, escapeSpace, clearDOMElement } from './utils/utils';
 import { nmrRegex } from './utils/regex';
@@ -300,10 +300,21 @@ export class H1Component {
         .map(Number)
         .compact()
         .value();
+      const peakType = couplingMatch[2];
+      let errMsg = '';
+      let peakTypeError = false;
+      const JNumber = JCount[peakType];
+      if (Js.length !== JNumber) {
+        const zhi = JNumber === 1 ? '只' : '';
+        errMsg = `${peakType}峰应${zhi}有${JCount[peakType]}个耦合常数`;
+        peakTypeError = true;
+      }
       return {
         Js,
+        peakTypeError,
+        errMsg,
         peak: couplingMatch[1],
-        peakType: couplingMatch[2] as Multiplet,
+        peakType: peakType as Multiplet,
         hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
