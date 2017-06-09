@@ -19,7 +19,8 @@ export class HrmsComponent {
   private willHighlightData: boolean;
   // error message
   private errMsg: {
-
+    dataErr: string;
+    formatErr: string;
   };
   private domElements: {
     $strict: HTMLInputElement;
@@ -36,6 +37,10 @@ export class HrmsComponent {
     this.domElements = {
       $strict: document.querySelector('#strict') as HTMLInputElement,
     }
+    this.errMsg = {
+      dataErr: '数据有误',
+      formatErr: '格式有误',
+    };
     this.isStrict = this.domElements.$strict.checked;
   }
 
@@ -88,47 +93,72 @@ export class HrmsComponent {
 
     // handle source match
     if (sourceMatch === null) {
-      return highlightData(hrmsData, HighlightType.Danger, '数据有误')
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
     } else {
       source = sourceMatch[1];
       if (!includes(sourceList, source)) {
-        const highlightedSource = highlightData(source, HighlightType.Danger, '数据有误');
-        return replace(hrmsData, source, highlightedSource);
+        const highlightedSource = highlightData(source, HighlightType.Danger, this.errMsg.dataErr);
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr, source, highlightedSource);
       }
     }
 
     // handle ionMatch
     if (ionMatch === null) {
-      return highlightData(hrmsData, HighlightType.Danger, '数据有误')
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
     } else {
       ionPlusSign = ionMatch[1] || ionMatch[3];
       ion = ionMatch[2] || ionMatch[4];
-      // for match like '[M]+' and '(M)+'
-      if (ionPlusSign === '' && ion !== '') {
-        ion = highlightData(ionMatch[0], HighlightType.Danger, '数据有误');
-      } else {
-        // for match like '[M+Na]+' and '(M + H)+'
-        if (this.isStrict) {
-          if (ionPlusSign === ' + ') {
-            if (includes(ionList, ion)) {
-              ion = highlightData(ionMatch[0], HighlightType.Danger, '数据有误');
-            }
-          } else {
-            ionPlusSign = highlightData(ionPlusSign, HighlightType.Danger, '格式有误');
-          }
-        } else {
-          ionPlusSign = ' + ';
-          if (includes(ionList, ion)) {
-              ion = highlightData(ionMatch[0], HighlightType.Danger, '数据有误');
-          }
+      const highlightedIon = highlightData(ionMatch[0], HighlightType.Danger, this.errMsg.dataErr);
+      // match [M]+
+      if (ion === '') {
+        if (ionPlusSign !== '') {
+          ion = highlightedIon;
+          return this.getDangerStr(hrmsData, this.errMsg.dataErr, ion, highlightedIon);
         }
+      } else if (includes(ionList, ion)) {
+        // match [M + H]+
+        if (this.isStrict && ionPlusSign !== ' + ') {
+          ion = highlightedIon;
+          return this.getDangerStr(hrmsData, this.errMsg.dataErr, ion, highlightedIon);
+        }
+      } else { 
+        ion = highlightedIon;
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr, ion, highlightedIon);
       }
-      // if (!includes(ionList, ion) && ionPlusSign !== '') {
-      //   ion = highlightData(ionMatch[0], HighlightType.Danger, '数据有误');
-      // }
     }
-    console.log("ionPlusSign ", ionPlusSign);
-    console.log(sourceMatch, ionMatch, dataMatch);
+
+    // handle data
+    if (dataMatch === null) {
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
+    } else {
+      const formula = dataMatch[1];
+      const exactMass = dataMatch[3];
+      const foundMass = dataMatch[4];
+      if (!formula) {
+
+      }
+    }
+    console.log(dataMatch);
+    // console.log(sourceMatch, ionMatch, dataMatch);
+  }
+
+  private getDangerStr(
+    data: string,
+    errMsg: string,
+    strToReplace?: string,
+    replacement?: string) {
+      let replacedData = '';
+      if (strToReplace) {
+        if (replacement === undefined) {
+          return highlightData(data, HighlightType.Danger, errMsg);
+        }
+        return highlightData(
+          replace(data, strToReplace, replacement),
+          HighlightType.Danger,
+          errMsg,
+        );
+      }
+      return highlightData(replacedData, HighlightType.Danger, errMsg);
   }
 
   public static get getInstance(): HrmsComponent {
