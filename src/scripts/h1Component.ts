@@ -138,7 +138,7 @@ export class H1Component {
   /**
    * render data from individual H1 render objects
    * @example
-   * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H)'
+   * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H).'
    * renderStrArrays([{
    *    meta: {
    *      type: 'H',
@@ -152,7 +152,8 @@ export class H1Component {
    *        Js: null,
    *        hydrogenCount: 1,
    *      }
-   *    ]
+   *    ],
+   *    tail: '.'
    * }])
    * @private
    * @param {H1RenderObj[]} h1RenderObjs 
@@ -345,6 +346,16 @@ export class H1Component {
     }
   }
 
+  /**
+   * check for the validity of peak data, report errors on invalid.
+   * 
+   * @private
+   * @param {H1Data} peakDatum 
+   * @param {number} freq 
+   * @returns {H1Data} 
+   * 
+   * @memberof H1Component
+   */
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
     if (!peakDatum || typeof peakDatum === 'string') {
       return peakDatum;
@@ -387,17 +398,9 @@ export class H1Component {
                 peakDatumCopy.peakTypeError = true;
                 peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰应有耦合常数`;
               } else {
-                const isAllJValid = every(
-                  peakDatumCopy.Js,
-                  (J) => {
-                    return this.isJValid(J, freq);
-                  });
+                const isAllJValid = every(peakDatumCopy.Js, J => this.isJValid(J, freq));
                 if (!isAllJValid) {
-                  peakDatumCopy.Js = map(
-                    peakDatumCopy.Js,
-                    (J) => {
-                      return this.roundJ(J, freq);
-                    });
+                  peakDatumCopy.Js = map(peakDatumCopy.Js, J => this.roundJ(J, freq));
                   peakDatumCopy.warning = true;
                   const originalJsString = 
                      chain(<number[]>peakDatum.Js)
@@ -456,17 +459,14 @@ export class H1Component {
     return MAGNIFICATION * J % freq === 0;
   }
 
-  
-
-  private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
-    if (type === HighlightType.Danger) {
-      return `<span class="danger-text" data-tooltip="${errMsg}">${str}</span>`;
-    } else if (type === HighlightType.Warning) {
-      return `<span class="warning-text" data-tooltip="${errMsg}">${str}</span>`;
-    }
-    return str;
-  }
-
+  /**
+   * render error to screen
+   * 
+   * @private
+   * @param {string} msg 
+   * 
+   * @memberof H1Component
+   */
   private renderError(msg: string): void {
     clearDOMElement('#output');
     if (this.inputtedData !== '') {
@@ -474,6 +474,14 @@ export class H1Component {
     }
   }
 
+  /**
+   * get instance for singleton
+   * 
+   * @readonly
+   * @static
+   * @type {H1Component}
+   * @memberof H1Component
+   */
   public static get getInstance(): H1Component {
     if (!H1Component.instance) {
       return new H1Component();
