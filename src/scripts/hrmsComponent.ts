@@ -1,4 +1,4 @@
-
+import { map } from 'lodash';
 import { ComponentData } from './utils/constants';
 
 export class HrmsComponent {
@@ -26,7 +26,7 @@ export class HrmsComponent {
   handle(): ComponentData|null {
     this.reset();
     const hrmsDataArr = this.getHrmsDataArray();
-    this.parseHrmmsData();
+    const parsedData = map(hrmsDataArr, this.parseHrmmsData);
     return null;
   }
 
@@ -44,11 +44,17 @@ export class HrmsComponent {
 
   private getHrmsDataArray() {
     const reg = /HRMS.+?(\d+\.\d*)\D*(\d+\.\d*)?/g;
+    return this.inputtedData.match(reg);
   }
 
-  private parseHrmsData() {
-    const hrmsReg = /HRMS.+?\[M\D+(\w+)\].+?(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D*(\d+\.\d*)?/g;
+  private parseHrmsData(hrmsData) {
+    const sourceReg = /\((\w+)\)/;
+    const ionReg = /\(M( *\+ *)(\w+)\)\+|\[M( *\+ *)(\w+)\]\+/;
+    const formulaReg = /for (([A-Z][a-z]?\d*)+)/;
+    const dataReg = /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)[\w\s,.:;，。；]*(\d+\.\d*)?/;
     // const parsedData = 
+    const source = hrmsData.match(sourceReg);
+    console.log(source);
   }
 
   public static get getInstance(): HrmsComponent {
