@@ -4,7 +4,7 @@ import { Tooltip } from './utils/tooltip';
 import { H1Component } from './h1Component';
 import { C13Component } from './c13Component';
 import { HrmsComponent } from './hrmsComponent';
-import { highlightData } from './utils/utils';
+import { highlightData, clearDOMElement, copyFormattedStrToClipboard } from './utils/utils';
 import { HighlightType } from './utils/nmr';
 
 

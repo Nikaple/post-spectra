@@ -1,6 +1,14 @@
 import { map } from 'lodash';
 import { ComponentData } from './utils/constants';
 
+interface HrmsData {
+  source: string;
+  ion: string;
+  formula: string;
+  exactMass: number;
+  foundMass?: number;
+}
+
 export class HrmsComponent {
 
   // date from input
@@ -26,7 +34,10 @@ export class HrmsComponent {
   handle(): ComponentData|null {
     this.reset();
     const hrmsDataArr = this.getHrmsDataArray();
-    const parsedData = map(hrmsDataArr, this.parseHrmmsData);
+    if (hrmsDataArr === null) {
+      return null;
+    }
+    const parsedData = map(hrmsDataArr, this.parseHrmsData);
     return null;
   }
 
@@ -42,19 +53,21 @@ export class HrmsComponent {
     this.willHighlightData = false;
   } 
 
-  private getHrmsDataArray() {
+  private getHrmsDataArray(): RegExpMatchArray|null {
     const reg = /HRMS.+?(\d+\.\d*)\D*(\d+\.\d*)?/g;
     return this.inputtedData.match(reg);
   }
 
-  private parseHrmsData(hrmsData) {
+  private parseHrmsData(hrmsData: string) {
     const sourceReg = /\((\w+)\)/;
     const ionReg = /\(M( *\+ *)(\w+)\)\+|\[M( *\+ *)(\w+)\]\+/;
     const formulaReg = /for (([A-Z][a-z]?\d*)+)/;
-    const dataReg = /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)[\w\s,.:;，。；]*(\d+\.\d*)?/;
+    const dataReg = /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D+(\d+\.\d*)?/;
     // const parsedData = 
     const source = hrmsData.match(sourceReg);
-    console.log(source);
+    const ion = hrmsData.match(ionReg);
+    const data = hrmsData.match(dataReg);
+    console.log(source, ion, data);
   }
 
   public static get getInstance(): HrmsComponent {

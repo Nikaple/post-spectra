@@ -1,7 +1,9 @@
 import { ComponentData, solventsInfo } from './utils/constants';
-import { handleNMRData, Metadata, H1Data,
-  H1RenderObj, HighlightType, Multiplet } from './utils/nmr';
-import { highlightData, escapeSpace } from './utils/utils';
+import { handleNMRData, Metadata, H1Data, H1RenderObj,
+  HighlightType, Multiplet, isSinglePeak, isMultiplePeak,
+  isPeak, isMultiplePeakWithJ, 
+} from './utils/nmr';
+import { highlightData, escapeSpace, clearDOMElement } from './utils/utils';
 import { nmrRegex } from './utils/regex';
 import { some, split, map, forEach, clone, every, replace, slice, join, chain,
   endsWith, compact, includes } from 'lodash';

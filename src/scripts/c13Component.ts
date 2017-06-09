@@ -2,7 +2,7 @@ import { chain, map, split, clone, remove, forEach,
   round, join, trimEnd, last, initial } from 'lodash';
 import { ComponentData, solventsInfo } from './utils/constants';
 import { handleNMRData, C13Data, Metadata, C13RenderObj, HighlightType } from './utils/nmr';
-import { highlightData } from './utils/utils';
+import { highlightData, clearDOMElement } from './utils/utils';
 
 export class C13Component {
   // data from input
