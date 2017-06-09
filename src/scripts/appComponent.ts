@@ -15,10 +15,12 @@ export class AppComponent {
   private outputPlainText: string;
   // output text with highlight
   private outputRichText: string;
-  // input node
+  // input element
   private $input: HTMLTextAreaElement;
-  // output node
+  // output element
   private $output: HTMLDivElement;
+  // autoCopy node
+  private $autoCopy: HTMLInputElement
   // data collected from other components
   private acquiredData: ComponentData[];
   // instance for singleton
@@ -32,7 +34,7 @@ export class AppComponent {
   constructor() {
     this.$input = document.querySelector('#input') as HTMLTextAreaElement;
     this.$output = document.querySelector('#output') as HTMLDivElement;
-    // this.inputText = this.$input.value;
+    this.$autoCopy = document.querySelector('#autoCopy') as HTMLInputElement;
     this.acquiredData = [];
     this.init();
   }
@@ -93,16 +95,18 @@ export class AppComponent {
     // clear error div
     clearDOMElement('#error');
     let plainText = this.$input.value;
-    // get plainText by replacing input string with componentData[index].outputPlain[index]
-    forEach(componentsData, (componentData) => {
-      forEach(componentData.input, (input, index) => {
-        plainText = chain(plainText)
-          .replace(input, componentData.outputPlain[index])
-          .replace(/\n/g, '<br>')
-          .value();
+    if (this.$autoCopy.checked) {
+      // get plainText by replacing input string with componentData[index].outputPlain[index]
+      forEach(componentsData, (componentData) => {
+        forEach(componentData.input, (input, index) => {
+          plainText = chain(plainText)
+            .replace(input, componentData.outputPlain[index])
+            .replace(/\n/g, '<br>')
+            .value();
+        });
       });
-    });
-    copyFormattedStrToClipboard(plainText);
+      copyFormattedStrToClipboard(plainText);
+    }
     let richText = this.$input.value;
     // get plainText by replacing input string with componentData[index].outputPlain[index]
     forEach(componentsData, (componentData) => {
