@@ -99,7 +99,7 @@ export class H1Component {
    * @memberof H1Component
    */
   private reset() {
-    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
+    this.inputtedData  = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
   } 
 
