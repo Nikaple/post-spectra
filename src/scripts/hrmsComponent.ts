@@ -1,6 +1,6 @@
 import { map, includes, replace, forEach, reduce, findIndex, compact } from 'lodash';
 import { highlightData } from './utils/utils';
-import { ComponentData } from './utils/constants';
+import { ComponentData, massOfElectron } from './utils/constants';
 import { HighlightType } from './utils/nmr';
 import { Formula, ElementCountPair } from './utils/formula';
 import { elementLookup, Element } from './utils/element';
