@@ -18,12 +18,12 @@ export function getActiveRadioButton(radios: NodeListOf<HTMLInputElement>): HTML
  * Stringify a formula object to chemical formula string
  * 
  * @export
- * @param {object} formulaLiteral 
+ * @param {object} formulaObj 
  * @returns {string} 
  */
-export function parseLiteralToChemicalFormula(formulaLiteral: ElementCountPair[]): string {
+export function parseLiteralToChemicalFormula(formulaObj: ElementCountPair[]): string {
   const formulaString = 
-  reduce(formulaLiteral, 
+  reduce(formulaObj, 
          (formulaString, elementCountPair: ElementCountPair) => {
            formulaString += elementCountPair.element;
            formulaString += elementCountPair.count === 1 
