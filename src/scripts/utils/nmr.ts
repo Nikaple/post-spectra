@@ -3,6 +3,7 @@ import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
 import { highlightData } from './utils';
 
+
 export type Nucleo = 'H'|'C';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
   |'br s'|'br d'|'brs'|'brd';

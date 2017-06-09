@@ -1,11 +1,8 @@
-import { clearDOMElement, highlightData } from './utils/utils';
 import { chain, map, split, clone, remove, forEach,
   round, join, trimEnd, last, initial } from 'lodash';
-import {
-  Metadata, C13Data, handleNMRData,
-  C13RenderObj, getDataArray, HighlightType,
-} from './utils/nmr';
-import { ComponentData, solventsInfo } from './utils/constants'; 
+import { ComponentData, solventsInfo } from './utils/constants';
+import { handleNMRData, C13Data, Metadata, C13RenderObj, HighlightType } from './utils/nmr';
+import { highlightData } from './utils/utils';
 
 export class C13Component {
   // data from input

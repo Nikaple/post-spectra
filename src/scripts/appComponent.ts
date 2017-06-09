@@ -1,11 +1,12 @@
-import { Tooltip } from './utils/tooltip';
 import { pullAll, forEach, compact, replace, chain, includes, round } from 'lodash';
+import { ComponentData } from './utils/constants';
+import { Tooltip } from './utils/tooltip';
 import { H1Component } from './h1Component';
 import { C13Component } from './c13Component';
 import { HrmsComponent } from './hrmsComponent';
-import { ComponentData } from './utils/constants';
-import { copyFormattedStrToClipboard, clearDOMElement, highlightData } from './utils/utils';
+import { highlightData } from './utils/utils';
 import { HighlightType } from './utils/nmr';
+
 
 export class AppComponent {
   // data from input
