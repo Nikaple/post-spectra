@@ -21,7 +21,7 @@ export const solventsInfo: SolventsInfo = {
   },
   cdcl3: {
     formattedString: 'CDCl<sub>3</sub>',
-    residualRange: [76.3, 77.7],
+    residualRange: [76.5, 77.5],
     peaks: 3,
   },
   cd3od: {
