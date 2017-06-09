@@ -1,7 +1,7 @@
 import { ComponentData, solventsInfo } from './utils/constants';
 import { handleNMRData, Metadata, H1Data, H1RenderObj,
   HighlightType, Multiplet, isSinglePeak, isMultiplePeak,
-  isPeak, isMultiplePeakWithJ, JCount
+  isPeak, isMultiplePeakWithJ, JCount,
 } from './utils/nmr';
 import { highlightData, escapeSpace, clearDOMElement } from './utils/utils';
 import { nmrRegex } from './utils/regex';
@@ -303,6 +303,7 @@ export class H1Component {
       const peakType = couplingMatch[2];
       let errMsg = '';
       let peakTypeError = false;
+      // tslint:disable-next-line:variable-name
       const JNumber = JCount[peakType];
       if (Js.length !== JNumber) {
         const zhi = JNumber === 1 ? '只' : '';
