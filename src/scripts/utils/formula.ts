@@ -1,5 +1,5 @@
 import { has, some, findIndex, reduce } from 'lodash';
-import { Element, elementLookup, isElement } from './element';
+import { Element, isElement } from './element';
 
 export interface ElementCountPair {
   element: Element|null;
@@ -112,20 +112,6 @@ export class Formula {
     });
     const checkedElementsArr = isElementArrError ? null : elementsArr;
     return checkedElementsArr;
-    // elementsArr: (ElementCountPair|null)[], 
-    // elementSet: string): (ElementCountPair|null)[] {
-    // 
-    // const ind = findIndex(elementsArr, elementPair => elementPair.element === element);
-    // if (~ind ) {
-    //   elementsArr[ind].count += count;
-    // } else {
-    //   if (!isElement(element)) {
-    //     elementsArr.push(null);
-    //   } else {
-    //     elementsArr.push({ element, count });
-    //   };
-    // }
-    // return elementsArr;
   }
 
   /**

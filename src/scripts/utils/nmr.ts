@@ -3,10 +3,36 @@ import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
 import { highlightData } from './utils';
 
+
 export type Nucleo = 'H'|'C';
 export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
-  |'br s'|'br d'|'brs'|'brd';
+  |'br s'|'br d'|'brs'|'brd'|'quint'|'sext'|'hept'|'tq'|'dddd';
 export type C13Data = string|null;
+
+type JCountType = {
+  [key: string]: number;
+}
+export const JCount: JCountType = {
+  d: 1,
+  t: 1,
+  q: 1,
+  quint: 1,
+  sext: 1,
+  hept: 1,
+  br: 1,
+  brs: 1,
+  'br s': 1,
+  dd: 2,
+  dt: 2,
+  td: 2,
+  dq: 2,
+  'br d': 2,
+  brd: 2,
+  tq: 2,
+  ddd: 3,
+  ddt: 3,
+  dddd: 4,
+}
 
 export enum HighlightType {
   Danger = 0,
@@ -18,7 +44,6 @@ export interface Metadata {
   type: Nucleo;
   freq: number;
   solvent: string;
-  tail?: string;
 }
 
 export interface H1Data {
@@ -60,7 +85,8 @@ export interface C13RenderObj {
  */
 export function isPeak(peak: Multiplet) {
   const peakLookup: Multiplet[] = ['s', 'd', 't', 'q', 'dd', 'dt', 'td',
-    'ddd', 'ddt', 'dq', 'br', 'm', 'br s', 'br d', 'brs', 'brd'];
+    'ddd', 'ddt', 'dq', 'br', 'm', 'br s', 'br d', 'brs', 'brd', 'quint',
+    'sext', 'hept', 'tq', 'dddd'];
   return includes(peakLookup, peak);
 }
 
@@ -86,7 +112,8 @@ export function isSinglePeak(peak: Multiplet): boolean {
  */
 export function isMultiplePeakWithJ(peak: Multiplet, isGeneral?: boolean) {
   const multiplePeakLookup: Multiplet[] = isGeneral
-    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq', 'brd', 'br d']
+    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq', 'brd', 'br d',
+      'quint', 'sext', 'hept', 'tq', 'ddt', 'dddd', 'tq']
     : ['d', 't', 'q', 'brd', 'br d'];
   return includes(multiplePeakLookup, peak);
 }

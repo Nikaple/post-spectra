@@ -10,4 +10,3 @@ import '../styles/base.scss';
 
 import { AppComponent } from './appComponent';
 AppComponent.getInstance;
-

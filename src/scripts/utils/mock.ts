@@ -176,3 +176,19 @@ Yield 82%; 225.8 mg; yellow solid; mp 106–108℃; IR (KBr): 1664, 1289, 1173, 
 (6-methyl-3-pentylquinolin-2-yl)(phenyl)methanone (4x)
 Yield 77%; 244.4 mg; red solid; mp 59–61℃; IR (KBr): 1674, 1651, 1597, 1283, 1171, 915, 719, 701 cm–1; 1H NMR (600 MHz, CDCl3) δ 7.86 – 7.82 (m, 2H), 7.80 (d, J = 7.2 Hz, 2H), 7.44 – 7.39 (m, 2H), 7.35 (d, J = 7.8 Hz, 1H), 7.29 (t, J = 7.2 Hz, 2H), 2.68 (t, J = 7.8 Hz, 2H), 2.38 (s, 3H), 1.53 – 1.45 (m, 2H), 1.12 (s, 4H), 0.70 – 0.64 (m, 3H).    13C NMR (150 MHz, CDCl3) δ 195.3, 155.7, 143.7, 137.4, 136.1, 135.6, 133.7, 133.4, 131.4, 130.5, 128.9, 128.7, 128.3, 125.8, 31.6, 31.3, 30.4, 22.2, 21.5. 13.8, HRMS(ESI): m/z [M+H]+ calcd for C22H24NO: 318.1852; found: 318.1857.
 `;
+
+
+
+// html below
+
+// <div>
+//     <div class="input-formula-container">
+//         <input id="formula" name="mass" type="text" placeholder="formula here..." class="input-mass">
+//         <input id="hrmsData" name="mass" type="number" placeholder="HRMS data here..." class="input-mass" min="0.0" step="0.0001">
+//         <input id="mmol" name="mass" type="number" placeholder="mmol here..." class="input-mass" min="0.0" step="0.01">
+//         <input id="yield" name="mass" type="number" placeholder="yield here..." class="input-mass" min="0.0" step="0.1">
+//     </div>
+//     <div id="newFormula"></div>
+//     <div id="weight"></div>
+//     <div id="massError"></div>
+// </div>

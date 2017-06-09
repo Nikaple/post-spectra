@@ -3,19 +3,21 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Chemical SI Helper</title>
+    <title>Compound Validator</title>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="author" content="Nikaple">
+    <meta name="description" content="Write compound characterization info easier">
+    <meta name="keywords" content="Supporting information, SI, NMR, HRMS">
     <link rel="shortcut icon" href="favicon.ico" />
     <link rel="bookmark" href="favicon.ico" type="image/x-icon" />
-    <style></style>
 </head>
 
 <body>
     <header class="header">
         <a class="github-fork-ribbon left-top fork-me" href="https://github.com/Nikaple/chem-si-helper" title="View Guide" target="_blank">View Guide</a>
         <div class="header-wrapper">
-            <h2 class="app-title">Chemical Supporting Information Helper</h2>
+            <h2 class="app-title">Compound Characterization Validator</h2>
             <div class="checkbox-wrapper">
                 <input name="generalMultiplet" type="checkbox" id="generalMultiplet" class="h1-checkbox" checked>
                 <label for="generalMultiplet" class="radio-text">将非d, t, q峰当做m峰处理</label>
@@ -23,6 +25,8 @@
                 <label for="autoFixJ" class="radio-text">自动校正J值</label>
                 <input name="strict" type="checkbox" id="strict" class="h1-checkbox" checked>
                 <label for="strict" class="radio-text">严格模式</label>
+                <input name="autoCopy" type="checkbox" id="autoCopy" class="h1-checkbox" checked>
+                <label for="strict" class="radio-text">自动复制</label>
             </div>
         </div>
     </header>
