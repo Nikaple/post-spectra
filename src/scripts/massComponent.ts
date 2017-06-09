@@ -234,18 +234,3 @@ export class MassComponent {
     return MassComponent.instance;
   }
 }
-
-
-// html below
-
-// <div>
-//     <div class="input-formula-container">
-//         <input id="formula" name="mass" type="text" placeholder="formula here..." class="input-mass">
-//         <input id="hrmsData" name="mass" type="number" placeholder="HRMS data here..." class="input-mass" min="0.0" step="0.0001">
-//         <input id="mmol" name="mass" type="number" placeholder="mmol here..." class="input-mass" min="0.0" step="0.01">
-//         <input id="yield" name="mass" type="number" placeholder="yield here..." class="input-mass" min="0.0" step="0.1">
-//     </div>
-//     <div id="newFormula"></div>
-//     <div id="weight"></div>
-//     <div id="massError"></div>
-// </div>

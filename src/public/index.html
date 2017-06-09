@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>Chemical SI Helper</title>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    </head>
-    <body>
-        <header class="header">
-            <a class="github-fork-ribbon left-top fork-me" href="https://github.com/Nikaple/chem-si-helper" title="View Guide" target="_blank">View Guide</a>
-            <div class="header-wrapper">
-                <h2 class="app-title">Chemical Supporting Information Helper</h2>
-                <div class="checkbox-wrapper">
-                    <input name="generalMultiplet" type="checkbox" id="generalMultiplet" class="h1-checkbox" checked>
-                    <label for="generalMultiplet" class="radio-text">将非d, t, q峰当做m峰处理</label>
-                    <input name="autoFixJ" type="checkbox" id="autoFixJ" class="h1-checkbox" checked>
-                    <label for="autoFixJ" class="radio-text">自动校正J值</label>
-                    <input name="strict" type="checkbox" id="strict" class="h1-checkbox" checked>
-                    <label for="strict" class="radio-text">严格模式</label>
-                </div>
+<head>
+    <meta charset="UTF-8">
+    <title>Chemical SI Helper</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <link rel="bookmark" href="./favicon.ico" type="image/x-icon" 　/>
+</head>
+
+<body>
+    <header class="header">
+        <a class="github-fork-ribbon left-top fork-me" href="https://github.com/Nikaple/chem-si-helper" title="View Guide" target="_blank">View Guide</a>
+        <div class="header-wrapper">
+            <h2 class="app-title">Chemical Supporting Information Helper</h2>
+            <div class="checkbox-wrapper">
+                <input name="generalMultiplet" type="checkbox" id="generalMultiplet" class="h1-checkbox" checked>
+                <label for="generalMultiplet" class="radio-text">将非d, t, q峰当做m峰处理</label>
+                <input name="autoFixJ" type="checkbox" id="autoFixJ" class="h1-checkbox" checked>
+                <label for="autoFixJ" class="radio-text">自动校正J值</label>
+                <input name="strict" type="checkbox" id="strict" class="h1-checkbox" checked>
+                <label for="strict" class="radio-text">严格模式</label>
             </div>
-        </header>
-        <main class="main-wrapper">
-            <div class="input-container">
-                <textarea id="input" placeholder="Supporting Information here..." class="input-textarea"></textarea>
+        </div>
+    </header>
+    <main class="main-wrapper">
+        <div class="input-container">
+            <textarea id="input" placeholder="Supporting Information here..." class="input-textarea"></textarea>
+        </div>
+        <div class="output-container">
+            <div class="output-wrapper">
+                <div id="output" class="output-text"></div>
+                <div id="error" class="output-error"></div>
             </div>
-            <div class="output-container">
-                <div class="output-wrapper">
-                    <div id="output" class="output-text"></div>
-                    <div id="error" class="output-error"></div>
-                </div>
-            </div>
-        </main>
-    </body>
+        </div>
+    </main>
+</body>
+
 </html>

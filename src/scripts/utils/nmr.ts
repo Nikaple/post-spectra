@@ -3,8 +3,10 @@ import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
 import { highlightData } from './utils';
 
+
 export type Nucleo = 'H'|'C';
-export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br';
+export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
+  |'br s'|'br d'|'brs'|'brd';
 export type C13Data = string|null;
 
 export enum HighlightType {
@@ -17,7 +19,6 @@ export interface Metadata {
   type: Nucleo;
   freq: number;
   solvent: string;
-  tail?: string;
 }
 
 export interface H1Data {
@@ -59,7 +60,7 @@ export interface C13RenderObj {
  */
 export function isPeak(peak: Multiplet) {
   const peakLookup: Multiplet[] = ['s', 'd', 't', 'q', 'dd', 'dt', 'td',
-    'ddd', 'ddt', 'dq', 'br', 'm'];
+    'ddd', 'ddt', 'dq', 'br', 'm', 'br s', 'br d', 'brs', 'brd'];
   return includes(peakLookup, peak);
 }
 
@@ -71,7 +72,7 @@ export function isPeak(peak: Multiplet) {
  * @returns {boolean} 
  */
 export function isSinglePeak(peak: Multiplet): boolean {
-  const singlePeakLookup: Multiplet[] = ['s', 'br'];
+  const singlePeakLookup: Multiplet[] = ['s', 'br', 'br s', 'brs'];
   return includes(singlePeakLookup, peak);
 }
 
@@ -85,8 +86,8 @@ export function isSinglePeak(peak: Multiplet): boolean {
  */
 export function isMultiplePeakWithJ(peak: Multiplet, isGeneral?: boolean) {
   const multiplePeakLookup: Multiplet[] = isGeneral
-    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq']
-    : ['d', 't', 'q'];
+    ? ['d', 't', 'q', 'dd', 'dt', 'td', 'ddd', 'ddt', 'dq', 'brd', 'br d']
+    : ['d', 't', 'q', 'brd', 'br d'];
   return includes(multiplePeakLookup, peak);
 }
 
@@ -251,19 +252,13 @@ function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|nul
     const nucleo = datum.match(nmrRegex.nucleo[Number(isStrict)]);
     const freq = datum.match(nmrRegex.freq[Number(isStrict)]);
     const solvent = datum.match(nmrRegex.solvent[Number(isStrict)]);
-    // const tail = datum.match(nmrRegex.tail[Number(isStrict)]);
     if (!nucleo || !freq || !solvent) {
       return null;
     }
-    // let tailVal = '';
-    // if (tail[0] !== '.' && tail[0] !== ';' && isStrict) {
-    //   tailVal = highlightData(tail[0], HighlightType.Danger, '数据格式不对');
-    // }
     return {
       type: (nucleo[1] || nucleo[2]) as Nucleo,
       freq: +freq[1],
       solvent: solvent[1].toLowerCase(),
-      // tail: tailVal,
     };
   });
 }
@@ -271,7 +266,7 @@ function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|nul
 function parseTailData(tailArr: string[], isStrict: boolean): string[] {
   return map(tailArr, (tail) => {
     if (tail !== '.' && tail !== ';' && isStrict) {
-      return highlightData(tail, HighlightType.Danger, '数据格式不对');
+      return highlightData(tail, HighlightType.Danger, '格式有误');
     }
     return tail;
   });

@@ -19,7 +19,7 @@ const h1RegStrict = h1Reg;
 // match c13data
 const c13Head = '13C NMR.+?';
 const c13MHz = 'MHz.+?';
-const c13Optional = '(\\(\\d+C?\\))?';
+const c13Optional = '(\\(\\d*C?\\))?';
 
 const c13Reg = new RegExp(
 `${c13Head}${c13MHz}${peak}${c13Optional}${dataTail}${negative}`, 'g');
@@ -61,8 +61,8 @@ const tailStrict = tail;
 
 // match '7.63 (d, J = 7.9, 1.2, 1.4 Hz, 1H)'
 const h1PeakStrict = '\\d{1,2}\\.\\d{2}';
-const concaterJ = ' *\\((\\w+), J *= *';
-const concaterJStrict = ' \\((\\w+), J = ';
+const concaterJ = ' *\\((\\w+ ?\\w?), J *= *';
+const concaterJStrict = ' \\((\\w+ ?\\w?), J = ';
 const jNum = '(\\d+\\.?\\d*)';
 const jNumStrict = '(\\d{1,2}\\.\\d)';
 const nonCaptureComma = '(?:, *)?';
@@ -80,14 +80,14 @@ const h1PeakWithJsStrict = new RegExp(
 
 // match 7.80 - 7.55 (m, 3H)
 const hyphen = ' *[–−-] *';
-const hyphenStrict = ' [–−-] ';
 const parenthesisLeft = ' *\\( *';
 const parenthesisLeftStrict = ' \\(';
 const h1PeakWithoutJs = new RegExp(
-`(${peak}(${hyphen}${peak})?)${parenthesisLeft}(\\w+)${comma}(?:${hydrogenCount})`);
+`(${peak}(${hyphen}${peak})?)${parenthesisLeft}(\\w+ ?\\w?)${comma}(?:${hydrogenCount})`);
+
 const h1PeakWithoutJsStrict = new RegExp(
-`(${h1PeakStrict}(${hyphenStrict}${h1PeakStrict})?)${parenthesisLeftStrict}` + 
-`(\\w+)${commaStrict}(?:${hydrogenCount})`);
+`(${h1PeakStrict}(${hyphen}${h1PeakStrict})?)${parenthesisLeftStrict}` + 
+`(\\w+ ?\\w?)${commaStrict}(?:${hydrogenCount})`);
 
 interface RegExes {
   [key: string]: [RegExp, RegExp];
@@ -107,3 +107,13 @@ export const nmrRegex: RegExes = {
   h1PeakWithJs: [h1PeakWithJs, h1PeakWithJsStrict],
   h1PeakWithoutJs: [h1PeakWithoutJs, h1PeakWithoutJsStrict],
 };
+
+const hrmsReg = /HRMS.+?(\d+\.\d*)[\s,.;，。；]*(\d+\.\d*)?/g;
+const hrmsRegStrict = hrmsReg;
+const parseReg = /HRMS.+?\[M *\+? *(\w+)\].+?(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D*(\d+\.\d*)?/;
+
+
+export const hrmsRegex: RegExes = {
+   hrms: [hrmsReg, hrmsRegStrict],
+  //  parse: [parseReg, parseRegStrict]
+}

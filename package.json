@@ -1,6 +1,6 @@
 {
     "name": "chem-si-helper",
-    "version": "0.8.8",
+    "version": "0.8.10",
     "description": "A simple project to help writing supporting information easier",
     "main": "dist/index.html",
     "scripts": {
@@ -9,7 +9,7 @@
         "prod": "webpack -p",
         "test": "karma start",
         "test-watch": "karma start --no-single-run --auto-watch",
-        "lint": "tslint -c tslint.json src/**/*.ts --fix"
+        "lint": "tslint -c tslint.json src/**/*.ts --fix -e src/**/mock.ts"
     },
     "license": "ISC",
     "devDependencies": {

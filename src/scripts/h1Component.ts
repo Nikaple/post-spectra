@@ -1,17 +1,11 @@
-import { clearDOMElement,
-  highlightData } from './utils/utils';
-import { some, split, map, 
-  forEach, clone, every, replace,
-  slice, join, chain,
-  compact } from 'lodash';
 import { ComponentData, solventsInfo } from './utils/constants';
-import { Multiplet, Metadata, H1Data,
-  H1RenderObj, handleNMRData, getDataArray,
-  HighlightType, isSinglePeak,
-  isMultiplePeak, isMultiplePeakWithJ,
-  isPeak,
-} from './utils/nmr';
+import { handleNMRData, Metadata, H1Data,
+  H1RenderObj, HighlightType, Multiplet } from './utils/nmr';
+import { highlightData, escapeSpace } from './utils/utils';
 import { nmrRegex } from './utils/regex';
+import { some, split, map, forEach, clone, every, replace, slice, join, chain,
+  endsWith, compact, includes } from 'lodash';
+
 
 const peakRangePlaceholder = 'PEAKRANGE';
 
@@ -138,7 +132,7 @@ export class H1Component {
   /**
    * render data from individual H1 render objects
    * @example
-   * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H)'
+   * // returns '<sup>1</sup>H NMR (400 MHz, CDCl<sub>3</sub>) δ 7.77 (s, 1H).'
    * renderStrArrays([{
    *    meta: {
    *      type: 'H',
@@ -152,7 +146,8 @@ export class H1Component {
    *        Js: null,
    *        hydrogenCount: 1,
    *      }
-   *    ]
+   *    ],
+   *    tail: '.'
    * }])
    * @private
    * @param {H1RenderObj[]} h1RenderObjs 
@@ -224,12 +219,13 @@ export class H1Component {
       return peakObj;
     }
     let formattedPeak = '';
-    if (peakObj.peak !== peakRangePlaceholder) {
+    // if the peak is not PEAKRANGE, and do not contain danger/warning
+    if (peakObj.peak !== peakRangePlaceholder && peakObj.peak[0] !== '<') {
       formattedPeak = (typeof peakObj.peak === 'string')
       ? Number(peakObj.peak).toFixed(2)
       : `${Number(peakObj.peak[0]).toFixed(2)}–${Number(peakObj.peak[1]).toFixed(2)}`;
     } else {
-      formattedPeak = peakRangePlaceholder;
+      formattedPeak = peakObj.peak as string;
     }
     const rendeDangerPeak = this.renderOnCondition(
       peakObj.danger,
@@ -309,23 +305,51 @@ export class H1Component {
         hydrogenCount: +couplingMatch[6],
       };
     } else if (nonCouplingMatch) {
-      const peakArr = nonCouplingMatch[1].split(/ *[–−-] */g);
-      const peak = peakArr.length === 1 ? peakArr[0] : peakArr;
-      const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
-      const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
-      return {
-        peak,
-        danger,
-        errMsg,
-        peakType: nonCouplingMatch[3] as Multiplet,
-        Js: null,
-        hydrogenCount: +nonCouplingMatch[4],
-      };
+      const splitReg = / *[–−-] */;
+      const hyphen = (<RegExpMatchArray>nonCouplingMatch[1].match(splitReg)) || [''];
+      const peakArr = nonCouplingMatch[1].split(splitReg);
+      const validHyphen = ['–', ' – ', '−', ' − ', ' - ', '-'];
+      let peak;
+      if (this.isStrict && !includes(validHyphen, hyphen[0]) && hyphen[0] !== '') {
+        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式有误');
+        return {
+          peak,
+          peakType: nonCouplingMatch[3] as Multiplet,
+          Js: null,
+          hydrogenCount: +nonCouplingMatch[4],
+        };
+      } else {
+        peak = peakArr.length === 1 ? peakArr[0] : peakArr;
+        const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
+        const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
+        return {
+          peak,
+          danger,
+          errMsg,
+          peakType: nonCouplingMatch[3] as Multiplet,
+          Js: null,
+          hydrogenCount: +nonCouplingMatch[4],
+        };
+      }
     } else {
-      return `<span class="danger-text" data-tooltip="数据有误">${data}</span>`;
+      if (endsWith(data, 'H')) {
+        data = data + ')';
+      }
+      // escape space here.
+      return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
     }
   }
 
+  /**
+   * check for the validity of peak data, report errors on invalid.
+   * 
+   * @private
+   * @param {H1Data} peakDatum 
+   * @param {number} freq 
+   * @returns {H1Data} 
+   * 
+   * @memberof H1Component
+   */
   private fixPeakData(peakDatum: H1Data, freq: number): H1Data {
     if (!peakDatum || typeof peakDatum === 'string') {
       return peakDatum;
@@ -368,17 +392,9 @@ export class H1Component {
                 peakDatumCopy.peakTypeError = true;
                 peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰应有耦合常数`;
               } else {
-                const isAllJValid = every(
-                  peakDatumCopy.Js,
-                  (J) => {
-                    return this.isJValid(J, freq);
-                  });
+                const isAllJValid = every(peakDatumCopy.Js, J => this.isJValid(J, freq));
                 if (!isAllJValid) {
-                  peakDatumCopy.Js = map(
-                    peakDatumCopy.Js,
-                    (J) => {
-                      return this.roundJ(J, freq);
-                    });
+                  peakDatumCopy.Js = map(peakDatumCopy.Js, J => this.roundJ(J, freq));
                   peakDatumCopy.warning = true;
                   const originalJsString = 
                      chain(<number[]>peakDatum.Js)
@@ -437,17 +453,14 @@ export class H1Component {
     return MAGNIFICATION * J % freq === 0;
   }
 
-  
-
-  private highlightPeakData(str: string, errMsg: string, type: HighlightType): string {
-    if (type === HighlightType.Danger) {
-      return `<span class="danger-text" data-tooltip="${errMsg}">${str}</span>`;
-    } else if (type === HighlightType.Warning) {
-      return `<span class="warning-text" data-tooltip="${errMsg}">${str}</span>`;
-    }
-    return str;
-  }
-
+  /**
+   * render error to screen
+   * 
+   * @private
+   * @param {string} msg 
+   * 
+   * @memberof H1Component
+   */
   private renderError(msg: string): void {
     clearDOMElement('#output');
     if (this.inputtedData !== '') {
@@ -455,6 +468,14 @@ export class H1Component {
     }
   }
 
+  /**
+   * get instance for singleton
+   * 
+   * @readonly
+   * @static
+   * @type {H1Component}
+   * @memberof H1Component
+   */
   public static get getInstance(): H1Component {
     if (!H1Component.instance) {
       return new H1Component();
