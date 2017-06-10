@@ -11,7 +11,8 @@ export type C13Data = string|null;
 
 type JCountType = {
   [key: string]: number;
-}
+};
+// tslint:disable-next-line:variable-name
 export const JCount: JCountType = {
   d: 1,
   t: 1,
@@ -32,7 +33,7 @@ export const JCount: JCountType = {
   ddd: 3,
   ddt: 3,
   dddd: 4,
-}
+};
 
 export enum HighlightType {
   Danger = 0,

@@ -6,7 +6,7 @@ import '../styles/base.scss';
 // const $input = <HTMLInputElement>document.querySelector('#input');
 // $input.innerHTML = mockH1Data + '\n' + mockC13Data;
 // $input.innerHTML = mockRealData;
-// $input.innerHTML = `1H NMR (600 MHz, CDCl3) δ  7.64  (d, J = 8.4 Hz, 1H).`;
+// $input.innerHTML = `HRMS(ESI): m/z [M]+ calcd for C23H18NO2: 340.1332; found: 340.1330.`;
 
 import { AppComponent } from './appComponent';
 AppComponent.getInstance;

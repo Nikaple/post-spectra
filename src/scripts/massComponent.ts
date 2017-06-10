@@ -16,7 +16,7 @@ export class MassComponent {
   // formula instance generated from input
   private formula: Formula;
   // formula object literal
-  private formulaLiteral: ElementCountPair[];
+  private formulaObj: ElementCountPair[];
   // chemical formula for output
   private outputFormula: string;
   // product yield of input molecule
@@ -79,7 +79,7 @@ export class MassComponent {
       this.renderError();
       return;
     }
-    this.formulaLiteral = parsedFormula;
+    this.formulaObj = parsedFormula;
 
     // calculation
     const activeIon = getActiveRadioButton($radios).value;
@@ -128,12 +128,12 @@ export class MassComponent {
       // if activeIon is a chemical element, aka not 'None'
       const isElement = some(elementLookup, massObj => massObj.element === activeIon);
       if (isElement) {
-        const ionIndex = findIndex(<ElementCountPair[]>this.formulaLiteral, elemCountPair => 
+        const ionIndex = findIndex(<ElementCountPair[]>this.formulaObj, elemCountPair => 
         elemCountPair.element === activeIon);
         if (~ionIndex) {
-          this.formulaLiteral[ionIndex].count += 1;
+          this.formulaObj[ionIndex].count += 1;
         } else {
-          this.formulaLiteral.push({
+          this.formulaObj.push({
             element: activeIon as Element,
             count: 1,
           });
@@ -142,7 +142,7 @@ export class MassComponent {
         this.addElementToExactMass(activeIon);
       }
     }
-    return this.formulaLiteral;
+    return this.formulaObj;
   }
 
   private substrateElectronFromExactMass() {
@@ -163,7 +163,7 @@ export class MassComponent {
    */
   private getExactMassOfMolecule(formula: Formula): number {
     const mass = reduce(
-      <ElementCountPair[]>this.formulaLiteral, 
+      <ElementCountPair[]>this.formulaObj, 
       (total, elem: ElementCountPair) => {
         const currentElement = elem.element as Element;
         const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);

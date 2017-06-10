@@ -1,5 +1,5 @@
 import { has, some, findIndex, reduce } from 'lodash';
-import { Element, isElement } from './element';
+import { Element, isElement, elementLookup } from './element';
 
 export interface ElementCountPair {
   element: Element|null;
@@ -63,6 +63,18 @@ export class Formula {
     return JSON.stringify(this.parse());
   }
 
+  public isValid(): boolean {
+    const elementsArr = this.parse();
+    if (!elementsArr) {
+      return false;
+    }
+    const validity = some(elementsArr, elementObj => isElement(elementObj.element));
+    if (!validity) {
+      return false;
+    }
+    return true;
+  }
+
   /**
    * get formula in string type
    * 
@@ -73,6 +85,34 @@ export class Formula {
   public getFormula(): string {
     return this.formula;
   }
+  
+    /**
+   * calculate exact mass from a Formula object
+   * 
+   * @private
+   * @param {Formula} formula 
+   * @returns {number} 
+   * 
+   * @memberof MassComponent
+   */
+  public getExactMass(): number {
+    const formulaObj = this.parse();
+    if (!formulaObj) {
+      return 0;
+    }
+    const mass = reduce(
+      <ElementCountPair[]>formulaObj,
+      (total, elem: ElementCountPair) => {
+        const currentElement = elem.element as Element;
+        const lookupIndex = findIndex(elementLookup, massObj => massObj.element === currentElement);
+        const currentMass = elementLookup[lookupIndex].mass;
+        total += currentMass * elem.count;
+        return total;
+      },
+      0);
+    return mass;
+  }
+
   
   /**
    * convert an element set to elements object 
