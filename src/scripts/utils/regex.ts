@@ -76,7 +76,7 @@ const h1PeakWithJs = new RegExp(
 `${jNum}?${concaterHz}${hydrogenCount}`);
 const h1PeakWithJsStrict = new RegExp(
 `(${h1PeakStrict})${concaterJStrict}${jNumStrict}${nonCaptureComma}${jNumStrict}?` + 
-`${nonCaptureComma}${jNumStrict}?${concaterHzStrict}${hydrogenCount}`);
+`${nonCaptureComma}${jNumStrict}?${concaterHzStrict}${hydrogenCount}\\s*`);
 
 // match 7.80 - 7.55 (m, 3H)
 const hyphen = ' *[–−-] *';
@@ -87,7 +87,7 @@ const h1PeakWithoutJs = new RegExp(
 
 const h1PeakWithoutJsStrict = new RegExp(
 `(${h1PeakStrict}(${hyphen}${h1PeakStrict})?)${parenthesisLeftStrict}` + 
-`(\\w+ ?\\w?)${commaStrict}(?:${hydrogenCount})`);
+`(\\w+ ?\\w?)${commaStrict}(?:${hydrogenCount})\\s*`);
 
 interface RegExes {
   [key: string]: [RegExp, RegExp];
@@ -117,3 +117,4 @@ export const hrmsRegex = {
   formulaReg: /for (([A-Z][a-z]?\d*)+)/,
   dataReg: /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D+(\d+\.\d*)?/,
 };
+console.log(nmrRegex);

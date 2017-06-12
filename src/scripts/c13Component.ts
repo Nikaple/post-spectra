@@ -77,9 +77,7 @@ export class C13Component {
    * @memberof C13Component
    */
   private reset() {
-    const $input = (<HTMLInputElement>document.querySelector('#input'));
-    $input.value = replace($input.value, /[\r\n]/g, '');
-    this.inputtedData = $input.value;
+    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
     this.isStrict = this.domElements.$strict.checked;
   } 

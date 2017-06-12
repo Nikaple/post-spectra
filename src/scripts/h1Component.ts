@@ -326,9 +326,14 @@ export class H1Component {
       const hyphen = (<RegExpMatchArray>nonCouplingMatch[1].match(splitReg)) || [''];
       const peakArr = nonCouplingMatch[1].split(splitReg);
       const validHyphen = ['–', ' – ', '−', ' − ', ' - ', '-'];
+      const validEnding = ['H', '.', ';'];
       let peak;
+      if (!includes(validEnding, nonCouplingMatch[0].substr(-1))) {
+        data = includes(data, ')') ? data : data + ')';
+        return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
+      }
       if (this.isStrict && !includes(validHyphen, hyphen[0]) && hyphen[0] !== '') {
-        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式有误');
+        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式有误'); 
         return {
           peak,
           peakType: nonCouplingMatch[3] as Multiplet,
@@ -349,9 +354,7 @@ export class H1Component {
         };
       }
     } else {
-      if (!includes(data, ')')) {
-        data = data + ')';
-      }
+      data = includes(data, ')') ? data : data + ')';
       // escape space here.
       return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
     }

@@ -239,7 +239,6 @@ export class HrmsComponent {
     }
 
     // handle ionMatch
-    console.log(this.domElements.$strict.checked, this.isStrict)
     let ionPlusSign = '';
     let ion = '';
     if (ionMatch === null) {

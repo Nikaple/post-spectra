@@ -41,13 +41,15 @@
 
 ### HRMS 数据检测
 
-  > The reported molecular formulas and Calcd values should include any added atoms (usually H or Na). For example, HRMS (ESI/QTOF) m/z: [M + Na]+ Calcd for C13H17NO3Na, 258.1101; Found 258.1074.  ---- Journal of Organic Chemistry Style Guide
+本部分的数据规范来源于JOC style guide. 在标准的描述信息中，提供的化学式应为测试分子加上H或者Na的结果。例如，苯的HRMS信息应被报道为：HRMS (ESI/QTOF): m/z [M + H]<sup>+</sup> Calcd for C<sub>6</sub>H<sub>7</sub>, 78.0542; Found 78.0569. 但由于HRMS测试的方法众多，而各课题组对数据的描述也不尽相同，故在此只对仪器信息与单词拼写、格式做较基本的检测，检测通过的数据不保证可以直接使用。
 
-  > A Found value within 0.003 m/z unit of the Calcd value of a parent-derived ion, together with other available data (including knowledge of the elements present in reactants and reagents) is usually adequate for supporting a  molecular formula for compounds with molecular masses below 1000 amu.  ---- Journal of Organic Chemistry Style Guide
+> The reported molecular formulas and Calcd values should include any added atoms (usually H or Na). For example, HRMS (ESI/QTOF) m/z: [M + Na]+ Calcd for C13H17NO3Na, 258.1101; Found 258.1074.  ---- Journal of Organic Chemistry Style Guide
+
+> A Found value within 0.003 m/z unit of the Calcd value of a parent-derived ion, together with other available data (including knowledge of the elements present in reactants and reagents) is usually adequate for supporting a molecular formula for compounds with molecular masses below 1000 amu.  ---- Journal of Organic Chemistry Style Guide
 
 ### 规范数据示例
 
-  Yield 78% (174.8 mg); yellow solid; mp 85-87 °C; IR (KBr): 3448, 1555, 1459, 1430, 1229, 1129, 1074, 1025 cm<sup>-1</sup>; 1H NMR (600 MHz, CDCl<sub>3</sub>): δ = 11.43 (s, 1H), 8.28 (d, J = 6.0 Hz, 1H), 7.81 (dd, J = 7.8, 2.4 Hz, 3H), 7.67 (q, J = 8.4 Hz, 1H), 7.38 (br, 1H), 7.24 - 7.01 (m, 1H), 6.70–6.62 (m, 3H), 5.58−5.30 (m, 3H); 13C NMR (100 MHz, CDCl<sub>3</sub>): δ (ppm) = 144.4, 133.5(1), 133.5(2), 130.8(2C), 129.81, 129.79, 127.62, 127.42; HRMS (ESI): m/z [M + Na]<sup>+</sup> calcd for C<sub>8</sub>H<sub>14</sub>BrN<sub>3</sub>Na, 245.9637; found, 245.9633.
+  Yield 78% (174.8 mg); yellow solid; mp 85-87 °C; IR (KBr): 3448, 1555, 1459, 1430, 1229, 1129, 1074, 1025 cm<sup>-1</sup>; 1H NMR (600 MHz, CDCl<sub>3</sub>): δ = 11.43 (s, 1H), 8.28 (d, J = 6.0 Hz, 1H), 7.81 (dd, J = 7.8, 2.4 Hz, 3H), 7.67 (q, J = 8.4 Hz, 1H), 7.38 (br, 1H), 7.24 - 7.01 (m, 1H), 6.70–6.62 (m, 3H), 5.58−5.30 (m, 3H); 13C NMR (100 MHz, CDCl<sub>3</sub>): δ (ppm) = 144.4, 133.5(1), 133.5(2), 130.8(2C), 129.81, 129.79, 127.62, 127.42; HRMS (ESI): m/z [M + Na]<sup>+</sup> Calcd for C<sub>8</sub>H<sub>14</sub>BrN<sub>3</sub>Na, 245.9637; Found 245.9633.
 
 ### 原始数据示例
 
