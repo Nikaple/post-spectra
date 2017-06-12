@@ -103,12 +103,15 @@ export class H1Component {
     this.willHighlightData = false;
   } 
 
+  
   /**
-   * render data to screen
+   * return h1Component data to render
    * 
    * @private
    * @param {Metadata[]} metadataArr 
    * @param {H1Data[][]} peakDataObjs 
+   * @param {string[]} tailArr 
+   * @returns {ComponentData} 
    * 
    * @memberof H1Component
    */
@@ -346,7 +349,7 @@ export class H1Component {
         };
       }
     } else {
-      if (endsWith(data, 'H')) {
+      if (!includes(data, ')')) {
         data = data + ')';
       }
       // escape space here.
@@ -492,7 +495,7 @@ export class H1Component {
    */
   public static get getInstance(): H1Component {
     if (!H1Component.instance) {
-      return new H1Component();
+      H1Component.instance = new H1Component();
     }
     return H1Component.instance;
   }

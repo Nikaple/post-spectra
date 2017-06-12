@@ -20,7 +20,7 @@ export class AppComponent {
   // output element
   private $output: HTMLDivElement;
   // autoCopy node
-  private $autoCopy: HTMLInputElement
+  private $autoCopy: HTMLInputElement;
   // data collected from other components
   private acquiredData: ComponentData[];
   // instance for singleton
@@ -79,6 +79,9 @@ export class AppComponent {
    * @memberof AppComponent
    */
   private reset() {
+    // remove tooltip
+    Tooltip.getInstance.destroy();
+    // clear dom
     if (this.$input.value === '') {
       clearDOMElement('#error');
       clearDOMElement('#output');
@@ -166,10 +169,7 @@ export class AppComponent {
     let leftScrollFlag = false;
     let rightScrollFlag = false;
 
-    $inputScrollbarHolder.addEventListener('scroll', inputScroll);
-    $outputScrollbarHolder.addEventListener('scroll', outputScroll);
-
-    function outputScroll() {
+    const outputScroll = function () {
       const scrollPercent = $outputScrollbarHolder.scrollTop / $outputScrollbarHolder.scrollHeight;
       if (!leftScrollFlag) {
         $inputScrollbarHolder.scrollTop = 
@@ -177,8 +177,8 @@ export class AppComponent {
         rightScrollFlag = true;
       }
       leftScrollFlag = false;
-    }
-    function inputScroll() {
+    };
+    const inputScroll = function () {
       const scrollPercent = $inputScrollbarHolder.scrollTop / $inputScrollbarHolder.scrollHeight;
       if (!rightScrollFlag) {
         $outputScrollbarHolder.scrollTop = 
@@ -186,7 +186,10 @@ export class AppComponent {
         leftScrollFlag = true;
       }
       rightScrollFlag = false;
-    }
+    };
+
+    $inputScrollbarHolder.addEventListener('scroll', inputScroll);
+    $outputScrollbarHolder.addEventListener('scroll', outputScroll);
   }
   /**
    * Creates an unique instance of AppComponent
@@ -198,7 +201,7 @@ export class AppComponent {
    */
   public static get getInstance(): AppComponent {
     if (!AppComponent.instance) {
-      return new AppComponent();
+      AppComponent.instance = new AppComponent;
     }
     return AppComponent.instance;
   }

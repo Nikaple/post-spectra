@@ -229,7 +229,7 @@ export class MassComponent {
 
   public static get getInstance(): MassComponent {
     if (!MassComponent.instance) {
-      return new MassComponent();
+      MassComponent.instance = new MassComponent();
     }
     return MassComponent.instance;
   }

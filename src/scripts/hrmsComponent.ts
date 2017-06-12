@@ -1,17 +1,19 @@
-import { map, includes, replace, forEach, reduce, findIndex, compact } from 'lodash';
+import { map, includes, replace, forEach, reduce, findIndex, compact, some, round } from 'lodash';
 import { highlightData } from './utils/utils';
-import { ComponentData, massOfElectron } from './utils/constants';
+import { ComponentData,  massOfElectron } from './utils/constants';
 import { HighlightType } from './utils/nmr';
 import { Formula, ElementCountPair } from './utils/formula';
 import { elementLookup, Element } from './utils/element';
+import { hrmsRegex } from './utils/regex';
 
 interface HrmsData {
-  source: string;
-  ion: string;
-  formula: ElementCountPair[];
-  exactMass: number;
-  foundMass: number;
-  calcdMass: number;
+  data: string; // original data
+  source: string; // HRMS source, ESI/APCI...
+  ion: string; // counter ion, H/Na...
+  formula: ElementCountPair[]; // formula object
+  exactMass: string; // input exact mass
+  foundMass: string; // input found mass
+  calcdMass: number; // calculated by program
 }
 
 interface YieldWeightHrms {
@@ -19,6 +21,12 @@ interface YieldWeightHrms {
   yield_?: number;
   weight?: number;
   errMsg: string;
+}
+
+interface ParsedData {
+  yield_: number | undefined;
+  weight: number | undefined;
+  hrms: string | HrmsData;
 }
 
 export class HrmsComponent {
@@ -31,6 +39,9 @@ export class HrmsComponent {
   private errMsg: {
     dataErr: string;
     formatErr: string;
+    decimalErr: string;
+    calcErr: string;
+    foundErr: string;
   };
   private domElements: {
     $strict: HTMLInputElement;
@@ -50,6 +61,9 @@ export class HrmsComponent {
     this.errMsg = {
       dataErr: '数据有误',
       formatErr: '格式有误',
+      decimalErr: '应保留4位小数',
+      calcErr: '数据错误，计算值：',
+      foundErr: '偏差值应小于0.003',
     };
     this.isStrict = this.domElements.$strict.checked;
   }
@@ -61,23 +75,16 @@ export class HrmsComponent {
       return null;
     }
     const validHrmsData = compact(hrmsDataArr) as YieldWeightHrms[];
-    const parsedData = map(validHrmsData, (data, index) => {
+    const hrmsRenderObj: ParsedData[] = map(validHrmsData, (data, index) => {
       return {
         yield_: data.yield_,
         weight: data.weight,
         hrms: this.parseHrmsData(data.hrms),
       };
     });
- console.log("parsedData ", parsedData);
-    // TODO yield & weight logic
-    // return this.render(parsedData);
-    // const { yield_, weight } = this.getYieldAndWeight(); 
-    return null;
+    return this.render(validHrmsData, hrmsRenderObj);
   }
 
-  // private render(parsedData) {
-  //   // const temp = parsedData.map()
-  // }
   /**
    * reset status, get input data
    * 
@@ -90,14 +97,85 @@ export class HrmsComponent {
     this.willHighlightData = false;
   } 
 
+
+  /**
+   * render Component data to appComponent
+   * 
+   * @private
+   * @param {YieldWeightHrms[]} hrmsDataArr 
+   * @param {ParsedData[]} hrmsRenderObjs 
+   * @returns {ComponentData} 
+   * 
+   * @memberof HrmsComponent
+   */
+  private render(hrmsDataArr: YieldWeightHrms[], hrmsRenderObjs: ParsedData[]): ComponentData {
+    const input = hrmsDataArr.map(data => data.hrms);
+    const outputPlain = this.renderStrArrays(hrmsRenderObjs);
+    this.willHighlightData = true;
+    const outputRich = this.renderStrArrays(hrmsRenderObjs);
+    return { input, outputPlain, outputRich };
+  }
+
+  private renderStrArrays(hrmsRenderObjs: ParsedData[]) {
+    const requiredDecimal = 4;
+    const maxFoundError = 0.003;
+    const dataStringArr = map(hrmsRenderObjs, (hrmsRenderObj) => {
+      const { yield_, weight, hrms } = hrmsRenderObj;
+      if (typeof hrms === 'string') {
+        return this.willHighlightData
+          ? `<strong>${hrms}</strong>`
+          : hrms;
+      }
+      const [, fractionE] = hrms.exactMass.split('.');
+      const [, fractionF] = hrms.foundMass.split('.');
+      const { data } = hrms;
+      if (this.isStrict) {
+        if (fractionE.length !== requiredDecimal) {
+          return this.dangerOnCondition(
+            data, 
+            this.errMsg.decimalErr, 
+            hrms.exactMass);
+        } else if (Number(hrms.exactMass) !== hrms.calcdMass) {
+          return this.dangerOnCondition(
+            data, 
+            `${this.errMsg.calcErr}${hrms.calcdMass}`,
+            String(hrms.exactMass));
+        }
+        if (fractionF.length !== requiredDecimal) {
+          return this.dangerOnCondition(
+            data, 
+            this.errMsg.decimalErr, 
+            String(hrms.foundMass));
+        } else if (Number(hrms.foundMass) - Number(hrms.exactMass) > maxFoundError) {
+          return this.dangerOnCondition(
+            data,
+            this.errMsg.foundErr,
+            String(hrms.foundMass),
+          );
+        }
+      }
+      const validData = this.willHighlightData
+        ? `<b>${highlightData(data, HighlightType.Success)}</b>`
+        : data;
+      return validData;
+    });
+    return dataStringArr;
+  }
+
+  /**
+   * return the full data of hrms part
+   * 
+   * @private
+   * @returns {((YieldWeightHrms|null)[]|null)} 
+   * 
+   * @memberof HrmsComponent
+   */
   private getHrmsDataArray(): (YieldWeightHrms|null)[]|null {
     const compoundDataArray = this.inputtedData.split(/\n/g);
     if (compoundDataArray[0] === ''  && compoundDataArray.length === 1) {
       return null;
     }
-    const yieldReg = /(\d+\.?\d*)( *)%/;
-    const weightReg = /(\d+\.?\d*)( *)mg/;
-    const hrmsReg = /HRMS.+?\d+\.\d*\D*(\d+\.\d*)?/;
+    const { yieldReg, weightReg, hrmsReg } = hrmsRegex;
     const dataArr = map(compoundDataArray, (data) => {
       const yieldMatch = data.match(yieldReg) || [''];
       const weightMatch = data.match(weightReg) || [''];
@@ -128,15 +206,20 @@ export class HrmsComponent {
     return dataArr;
   }
 
+  /**
+   * parse hrms data to individual parts
+   * 
+   * @private
+   * @param {string} hrmsData 
+   * @returns {(string|HrmsData)} 
+   * 
+   * @memberof HrmsComponent
+   */
   private parseHrmsData(hrmsData: string): string|HrmsData {
-    const sourceReg = /\((\w+)\)/;
-    const ionReg = /\(M( *\+? *)(\w*)\)\+|\[M( *\+? *)(\w*)\]\+/;
-    const formulaReg = /for (([A-Z][a-z]?\d*)+)/;
-    const dataReg = /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D+(\d+\.\d*)?/;
-    // const parsedData = 
+    const { sourceReg, ionReg, formulaReg, dataReg } = hrmsRegex;
     const sourceMatch = hrmsData.match(sourceReg);
     const sourceList = ['ESI', 'APCI', 'EI', 'MALDI', 'CI',
-      'FD', 'FI', 'FAB', 'APPI', 'TS', 'PB'];
+      'FD', 'FI', 'FAB', 'APPI', 'TS', 'PB', 'DART'];
     const ionMatch = hrmsData.match(ionReg);
     const ionList = ['', 'H', 'Na', 'K', 'Cs'];
     const dataMatch = hrmsData.match(dataReg);
@@ -147,7 +230,10 @@ export class HrmsComponent {
       return this.getDangerStr(hrmsData, this.errMsg.dataErr);
     } else {
       source = sourceMatch[1];
-      if (!includes(sourceList, source)) {
+      const isContained = some(sourceList, (availableSource) => {
+        return includes(source, availableSource);
+      });
+      if (!isContained) {
         return this.getDangerStr(hrmsData, this.errMsg.dataErr, source);
       }
     }
@@ -177,15 +263,15 @@ export class HrmsComponent {
 
     // handle data
     let rawFormula = '';
-    let exactMass = 0;
-    let foundMass = 0;
+    let exactMass = '';
+    let foundMass = '';
     if (dataMatch === null) {
       return this.getDangerStr(hrmsData, this.errMsg.dataErr);
     } else {
       const tempArr = [];
       rawFormula = dataMatch[1];
-      exactMass = Number(dataMatch[3]);
-      foundMass = Number(dataMatch[4]);
+      exactMass = dataMatch[3];
+      foundMass = dataMatch[4];
       tempArr.push(rawFormula, exactMass, foundMass);
       for (let i = 0; i < tempArr.length; i += 1) {
         if (!tempArr[i]) {
@@ -203,10 +289,13 @@ export class HrmsComponent {
         }
       }
     }
+    const data = hrmsData;
     const formulaObj = new Formula(rawFormula);
     const formula = formulaObj.parse() as ElementCountPair[];
-    const calcdMass = formulaObj.getExactMass() + this.getIonMass(ion);
+    // 381.087745 -> 381.08775 -> 381.0878, not 381.0877
+    const calcdMass = round(round(formulaObj.getExactMass() + this.getIonMass(ion), 5), 4);
     return {
+      data,
       source,
       ion,
       formula,
@@ -217,8 +306,7 @@ export class HrmsComponent {
   }
 
   /**
-   * calculate the actual ion in high-resolution mass spectrum, that is, 
-   * original molecule + H/Na/K ion
+   * calculate the deviation of exact mass
    * 
    * @private
    * @param {Formula} formula 
@@ -246,9 +334,32 @@ export class HrmsComponent {
     return replace(data, strToReplace, replacement);
   }
 
+  private dangerOnCondition(
+    data: string,
+    errMsg: string,
+    replace: string|undefined,
+  ) : string {
+    if (this.willHighlightData) {
+      return this.getDangerStr(data, errMsg, replace);
+    }
+    return data;
+  }
+
+  private renderOnCondition(
+    cond: boolean|undefined,
+    strToRender: string,
+    type: HighlightType,
+    errMsg?: string|undefined,
+  ) : string {
+    if (cond) {
+      return highlightData(strToRender, type, errMsg);
+    }
+    return strToRender;
+  }
+
   public static get getInstance(): HrmsComponent {
     if (!HrmsComponent.instance) {
-      return new HrmsComponent();
+      HrmsComponent.instance = new HrmsComponent();
     }
     return HrmsComponent.instance;
   }

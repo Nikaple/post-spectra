@@ -107,3 +107,13 @@ export const nmrRegex: RegExes = {
   h1PeakWithJs: [h1PeakWithJs, h1PeakWithJsStrict],
   h1PeakWithoutJs: [h1PeakWithoutJs, h1PeakWithoutJsStrict],
 };
+
+export const hrmsRegex = {
+  yieldReg: /(\d+\.?\d*)( *)%/,
+  weightReg: /(\d+\.?\d*)( *)mg/,
+  hrmsReg: /HRMS.+?\d+\.\d*\D*(\d+\.\d*)?/,
+  sourceReg: /\((\S+)\)/,
+  ionReg: /\(M( *\+? *)(\w*)\)\+|\[M( *\+? *)(\w*)\]\+/,
+  formulaReg: /for (([A-Z][a-z]?\d*)+)/,
+  dataReg: /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D+(\d+\.\d*)?/,
+};

@@ -1,5 +1,5 @@
 import { chain, map, split, clone, remove, forEach,
-  round, join, trimEnd, last, initial } from 'lodash';
+  round, join, trimEnd, last, initial, replace } from 'lodash';
 import { ComponentData, solventsInfo } from './utils/constants';
 import { handleNMRData, C13Data, Metadata, C13RenderObj, HighlightType } from './utils/nmr';
 import { highlightData, clearDOMElement } from './utils/utils';
@@ -78,12 +78,14 @@ export class C13Component {
    * @memberof C13Component
    */
   private reset() {
-    this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
+    const $input = (<HTMLInputElement>document.querySelector('#input'));
+    $input.value = replace($input.value, /[\r\n]/g, '');
+    this.inputtedData = $input.value;
     this.willHighlightData = false;
   } 
   
   /**
-   * Returns the string object to render
+   * Returns the string to render
    * 
    * @private
    * @param {Metadata[]} metadataArr 
@@ -223,7 +225,7 @@ export class C13Component {
 
   public static get getInstance(): C13Component {
     if (!C13Component.instance) {
-      return new C13Component();
+      C13Component.instance = new C13Component();
     }
     return C13Component.instance;
   }
