@@ -1,4 +1,4 @@
-import { pullAll, forEach, compact, replace, chain, includes, round } from 'lodash';
+import { pullAll, forEach, compact, replace, chain, includes, round, escapeRegExp } from 'lodash';
 import { ComponentData } from './utils/constants';
 import { Tooltip } from './utils/tooltip';
 import { H1Component } from './h1Component';
@@ -118,7 +118,7 @@ export class AppComponent {
           ? componentData.outputRich[index]
           : highlightData(componentData.outputRich[index], HighlightType.Success);
         richText = chain(richText)
-          .replace(input, replacement)
+          .replace(new RegExp(escapeRegExp(input), 'g'), replacement)
           .replace(/\n/g, '<br>')
           .value();
       });

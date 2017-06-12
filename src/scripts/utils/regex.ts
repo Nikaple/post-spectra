@@ -117,4 +117,3 @@ export const hrmsRegex = {
   formulaReg: /for (([A-Z][a-z]?\d*)+)/,
   dataReg: /(([A-Z][a-z]?\d*)+)\D*(\d+\.\d*)\D+(\d+\.\d*)?/,
 };
-console.log(nmrRegex);

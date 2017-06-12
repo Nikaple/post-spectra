@@ -206,7 +206,7 @@ export function getDataArray(data: string, type: Nucleo, isStrict: boolean): str
  * @param {string[]} dataArr 
  * @returns 
  */
-function splitDataArray(dataArr: string[], type: Nucleo,isStrict: boolean) {
+function splitDataArray(dataArr: string[], type: Nucleo, isStrict: boolean) {
   const trimmedData = map(dataArr, (datum) => {
     const tail = datum.match(/\s*[\s,.;，。；]$/) as RegExpMatchArray;
     trimEnd(datum, ' ,.; ，。；');
