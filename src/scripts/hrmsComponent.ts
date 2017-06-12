@@ -65,7 +65,6 @@ export class HrmsComponent {
       calcErr: '数据错误，计算值：',
       foundErr: '偏差值应小于0.003',
     };
-    this.isStrict = this.domElements.$strict.checked;
   }
 
   public handle() { // : ComponentData|null
@@ -95,6 +94,7 @@ export class HrmsComponent {
   private reset() {
     this.inputtedData = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
+    this.isStrict = this.domElements.$strict.checked;
   } 
 
 
@@ -239,6 +239,7 @@ export class HrmsComponent {
     }
 
     // handle ionMatch
+    console.log(this.domElements.$strict.checked, this.isStrict)
     let ionPlusSign = '';
     let ion = '';
     if (ionMatch === null) {

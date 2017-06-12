@@ -54,7 +54,6 @@ export class H1Component {
       $strict: document.querySelector('#strict') as HTMLInputElement,
       $error: document.querySelector('#error') as HTMLDivElement,
     };
-    this.isStrict = this.domElements.$strict.checked;
   }
 
   /**
@@ -101,6 +100,7 @@ export class H1Component {
   private reset() {
     this.inputtedData  = (<HTMLInputElement>document.querySelector('#input')).value;
     this.willHighlightData = false;
+    this.isStrict = this.domElements.$strict.checked;
   } 
 
   

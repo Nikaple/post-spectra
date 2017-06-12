@@ -38,7 +38,6 @@ export class C13Component {
       $error: document.querySelector('#error') as HTMLDivElement,
       $strict: document.querySelector('#strict') as HTMLInputElement,
     };
-    this.isStrict = this.domElements.$strict.checked;
   }
 
   public handle(): ComponentData|null {
@@ -82,6 +81,7 @@ export class C13Component {
     $input.value = replace($input.value, /[\r\n]/g, '');
     this.inputtedData = $input.value;
     this.willHighlightData = false;
+    this.isStrict = this.domElements.$strict.checked;
   } 
   
   /**
