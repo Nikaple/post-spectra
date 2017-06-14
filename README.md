@@ -37,15 +37,20 @@
   - 同一单位的数据在连写时只用写一个单位
     - √ 7.2, 2.0 Hz
     - × 7.2 Hz, 2.0 Hz
-  - 等号、连字符等符号两端都要有空格。
+  - 加号、等号两端都要有空格，连字符可以选择两端加或者两端均不加空格。
 
 ### HRMS 数据检测
 
-本部分的数据规范来源于JOC style guide. 在标准的描述信息中，提供的化学式应为测试分子加上H或者Na的结果。例如，苯的HRMS信息应被报道为：HRMS (ESI/QTOF): m/z [M + H]<sup>+</sup> Calcd for C<sub>6</sub>H<sub>7</sub>, 78.0542; Found 78.0569. 但由于HRMS测试的方法众多，而各课题组对数据的描述也不尽相同，故在此只对仪器信息与单词拼写、格式做较基本的检测，检测通过的数据不保证可以直接使用。
+本部分的数据规范来源于JOC style guide. 在标准的描述信息中，提供的化学式应为测试分子加上H或者Na的结果。例如，苯的HRMS信息应被报道为：HRMS (ESI/QTOF): m/z [M + H]<sup>+</sup> Calcd for C<sub>6</sub>H<sub>7</sub>, 78.0542; Found 78.0569.
 
 > The reported molecular formulas and Calcd values should include any added atoms (usually H or Na). For example, HRMS (ESI/QTOF) m/z: [M + Na]+ Calcd for C13H17NO3Na, 258.1101; Found 258.1074.  ---- Journal of Organic Chemistry Style Guide
 
 > A Found value within 0.003 m/z unit of the Calcd value of a parent-derived ion, together with other available data (including knowledge of the elements present in reactants and reagents) is usually adequate for supporting a molecular formula for compounds with molecular masses below 1000 amu.  ---- Journal of Organic Chemistry Style Guide
+
+由于HRMS测试的方法众多，而各课题组对数据的描述也不尽相同，故在此只对仪器信息与单词拼写、格式做较基本的检测，**检测通过的数据不保证可以直接使用**。检测的数据有如下几种：
+  - 离子源只进行基本检测，描述的离子源中只要含有ESI, APCI, EI, MALDI, CI, FD, FI, FAB, APPI, TS, PB, DART等常见离子源即为通过（未对质量分析器以及检测器的合理性进行检测）；
+  - 对于描述的化学式与理论值匹配程度的检测：精确到0.0001，也就是不允许出现任何偏差；
+  - 对于实验值的检测：与理论值偏差在±0.003即视为合格。
 
 ### 规范数据示例
 

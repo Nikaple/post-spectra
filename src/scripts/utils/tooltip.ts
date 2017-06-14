@@ -52,8 +52,8 @@ export class Tooltip {
     const leftMax = document.body.clientWidth - this.tooltip.offsetWidth;
     this.tooltip.style.left = Math.min(
       round(e.clientX - this.tooltip.offsetWidth / 2), leftMax) + 'px';
-    // hack the top pos for 3px
-    this.tooltip.style.top = (round((e.clientY - 3) / lineHeight) * lineHeight
+    // hack the top pos for 10px
+    this.tooltip.style.top = (Math.floor((e.clientY + 10) / lineHeight) * lineHeight
      - this.tooltip.offsetHeight - this.margin) + 'px';
     round(elemPos.top - this.tooltip.offsetHeight - this.margin) + 'px';
   }
