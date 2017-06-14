@@ -135,10 +135,10 @@ export class HrmsComponent {
             data, 
             this.errMsg.decimalErr, 
             hrms.exactMass);
-        } else if (Number(hrms.exactMass) !== hrms.calcdMass) {
+        } else if (Math.abs(Number(hrms.exactMass) - hrms.calcdMass) >= 0.0001) {
           return this.dangerOnCondition(
             data, 
-            `${this.errMsg.calcErr}${hrms.calcdMass}`,
+            `${this.errMsg.calcErr}${hrms.calcdMass.toFixed(4)}`,
             String(hrms.exactMass));
         }
         if (fractionF.length !== requiredDecimal) {

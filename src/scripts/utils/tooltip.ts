@@ -44,6 +44,9 @@ export class Tooltip {
 
   private getPosition(e: MouseEvent) {
     const elem = e.target as HTMLElement;
+    if (!elem.hasAttribute) {
+      return;
+    }
     if (!elem.hasAttribute('data-tooltip')) {
       return;
     }
