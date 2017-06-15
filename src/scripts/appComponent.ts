@@ -1,4 +1,5 @@
-import { pullAll, forEach, compact, replace, chain, includes, round, escapeRegExp } from 'lodash';
+import { pullAll, forEach, compact, replace, chain,
+  includes, round, escapeRegExp, escape } from 'lodash';
 import { ComponentData } from './utils/constants';
 import { Tooltip } from './utils/tooltip';
 import { H1Component } from './h1Component';
