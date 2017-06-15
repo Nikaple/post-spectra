@@ -135,11 +135,6 @@ export class HrmsComponent {
             data, 
             this.errMsg.decimalErr, 
             hrms.exactMass);
-        } else if (Math.abs(Number(hrms.exactMass) - hrms.calcdMass) >= 0.0001) {
-          return this.dangerOnCondition(
-            data, 
-            `${this.errMsg.calcErr}${hrms.calcdMass.toFixed(4)}`,
-            String(hrms.exactMass));
         }
         if (fractionF.length !== requiredDecimal) {
           return this.dangerOnCondition(
@@ -153,6 +148,14 @@ export class HrmsComponent {
             String(hrms.foundMass),
           );
         }
+      } else {
+        hrms.exactMass = Number(hrms.exactMass).toFixed(4);
+      }
+      if (Math.abs(Number(hrms.exactMass) - hrms.calcdMass) >= 0.0001) {
+        return this.dangerOnCondition(
+          data, 
+          `${this.errMsg.calcErr}${hrms.calcdMass.toFixed(4)}`,
+          String(hrms.exactMass));
       }
       const validData = this.willHighlightData
         ? `<b>${highlightData(data, HighlightType.Success)}</b>`

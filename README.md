@@ -65,7 +65,7 @@
 
 ### 规范数据示例
 
-  Yield 78% (174.8 mg); yellow solid; mp 85-87 °C; IR (KBr): 3448, 1555, 1459, 1430, 1229, 1129, 1074, 1025 cm<sup>-1</sup>; 1H NMR (600 MHz, CDCl<sub>3</sub>): δ = 11.43 (s, 1H), 8.28 (d, J = 6.0 Hz, 1H), 7.81 (dd, J = 7.8, 2.4 Hz, 3H), 7.67 (q, J = 8.4 Hz, 1H), 7.38 (br, 1H), 7.24 - 7.01 (m, 1H), 6.70–6.62 (m, 3H), 5.58−5.30 (m, 3H); 13C NMR (100 MHz, CDCl<sub>3</sub>): δ (ppm) = 144.4, 133.5(1), 133.5(2), 130.8(2C), 129.81, 129.79, 127.62, 127.42; HRMS (ESI): m/z [M + Na]<sup>+</sup> Calcd for C<sub>8</sub>H<sub>14</sub>BrN<sub>3</sub>Na, 245.9637; Found 245.9633.
+  Yield 78% (174.8 mg); yellow solid; mp 85-87 °C; IR (KBr): 3448, 1555, 1459, 1430, 1229, 1129, 1074, 1025 cm<sup>-1</sup>; 1H NMR (600 MHz, CDCl<sub>3</sub>): δ = 11.43 (s, 1H), 8.28 (d, J = 6.0 Hz, 1H), 7.81 (dd, J = 7.8, 2.4 Hz, 3H), 7.67 (q, J = 8.4 Hz, 1H), 7.38 (br, 1H), 7.24 - 7.01 (m, 1H), 6.70–6.62 (m, 3H), 5.58−5.30 (m, 3H); 13C NMR (100 MHz, CDCl<sub>3</sub>): δ (ppm) = 144.4, 133.5(1), 133.5(2), 130.8(2C), 129.81, 129.79, 127.62, 127.42; HRMS (ESI): m/z [M + Na]<sup>+</sup> Calcd for C<sub>8</sub>H<sub>14</sub>BrN<sub>3</sub>Na, 266.0263; Found 266.0236.
 
 ### 原始数据示例
 
