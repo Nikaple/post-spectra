@@ -50,15 +50,16 @@ export class Tooltip {
     if (!elem.hasAttribute('data-tooltip')) {
       return;
     }
+    const $output = document.querySelector('.output-container') as HTMLDivElement;
     const lineHeight = parseInt(getComputedStyle(elem).lineHeight as string, 10);
     const elemPos: ClientRect = elem.getBoundingClientRect();
     const leftMax = document.body.clientWidth - this.tooltip.offsetWidth;
     this.tooltip.style.left = Math.min(
       round(e.clientX - this.tooltip.offsetWidth / 2), leftMax) + 'px';
     // hack the top pos for 10px
-    this.tooltip.style.top = (Math.floor((e.clientY + 10) / lineHeight) * lineHeight
-     - this.tooltip.offsetHeight - this.margin) + 'px';
-    round(elemPos.top - this.tooltip.offsetHeight - this.margin) + 'px';
+    const temp = e.clientY + $output.scrollTop % lineHeight;
+    this.tooltip.style.top = (Math.floor(temp / lineHeight) * lineHeight - this.tooltip.offsetHeight - this.margin) + 'px';
+    console.log(e.clientY + $output.scrollTop % lineHeight);
   }
 
   public destroy(): void {

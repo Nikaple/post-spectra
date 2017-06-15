@@ -141,7 +141,7 @@ export class Formula {
           countPairArray[ind].count += count;
         } else {
           const checkedElement = isElement(element) ? element : null;
-          countPairArray.push({ element: checkedElement, count });
+          countPairArray.push({ count, element: checkedElement });
         }
         return countPairArray;
       },
