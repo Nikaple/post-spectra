@@ -58,7 +58,8 @@ export class Tooltip {
       round(e.clientX - this.tooltip.offsetWidth / 2), leftMax) + 'px';
     // hack the top pos for 8px
     const temp = 8 + $output.scrollTop % lineHeight;
-    this.tooltip.style.top = (Math.floor((e.clientY + temp) / lineHeight) * lineHeight - this.tooltip.offsetHeight - this.margin - temp) + 'px';
+    this.tooltip.style.top = (Math.floor((e.clientY + temp) / lineHeight) * lineHeight
+     - this.tooltip.offsetHeight - this.margin - temp) + 'px';
   }
 
   public destroy(): void {
