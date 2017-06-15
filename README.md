@@ -12,7 +12,7 @@
 
 #### - 将非d, t, q峰当做m峰处理：将除了d,t,q以及br d这四种峰型当做多重峰(m)处理，默认关闭。
 
-#### - 自动校正J值：自动将耦合常数的数值(mHz)修正为仪器频率(MHz)的倍数，例如：在400 MHz氢谱中，J = 7.7 Hz会被自动修正为J = 7.6 Hz，而在600 MHz氢谱中J = 7.7则会被修正位J = 7. Hz，默认开启。
+#### - 自动校正J值：自动将耦合常数的数值(mHz)修正为仪器频率(MHz)的倍数，例如：在400 MHz氢谱中，J = 7.7 Hz会被自动修正为J = 7.6 Hz，而在600 MHz氢谱中J = 7.7则会被修正位J = 7.8 Hz，默认开启。
 
 #### - 严格模式：在严格模式下会对氢谱、碳谱以及部分高分辨的数据及其格式格式进行检测，而非严格模式下只会检查数据而不检查格式，默认开启。（详见下）
 
@@ -22,7 +22,7 @@
 
 #### <sup>1</sup>H NMR 原始数据处理
 
-在谱图软件`MestReNova`中处理好谱图后，选中氢谱，在菜单栏中单击Multiplets Analysis显示耦合常数，再在其下拉菜单中选择`Copy`。随后切换到浏览器界面，将刚刚所复制的数据粘贴在屏幕左侧的文本框中，然后到`Word`中粘贴即可。**（复制一次，粘贴两次）**
+在谱图软件`MestReNova`中处理好谱图后，选中氢谱，在菜单栏中单击`Multiplets Analysis`显示耦合常数，再在其下拉菜单中选择`Copy`。随后切换到浏览器界面，将刚刚所复制的数据粘贴在屏幕左侧的文本框中，然后到`Word`中粘贴即可。**（复制一次，粘贴两次）**
 
 #### <sup>13</sup>C NMR 原始数据处理
 
@@ -31,6 +31,7 @@
 ### NMR 数据检测
 
 将已处理的谱图数据直接粘贴至`NMR`数据处理的文本框后，根据输出框高亮部分寻找错误来源。
+ - 未加粗：系统未识别输入的数据，请检查数据头尾是否正确。
  - 绿色高亮： 
     - 在**严格模式**下，表明该数据可直接使用，完全无误；
     - 在**非严格模式**下，表明数据无误，但可能存在格式问题。（复制到剪贴板的数据格式正确，可以直接粘贴使用）
@@ -51,7 +52,7 @@
 
 ### HRMS 数据检测
 
-本部分的数据规范来源于JOC style guide. 在标准的描述信息中，提供的化学式应为测试分子加上H或者Na的结果。例如，苯的HRMS信息应被报道为：HRMS (ESI/QTOF): m/z [M + H]<sup>+</sup> Calcd for C<sub>6</sub>H<sub>7</sub>, 78.0542; Found 78.0569.
+本部分的数据规范来源于JOC style guide. 在标准的描述信息中，提供的化学式应为测试分子加上H或者Na的结果。例如，苯的HRMS信息应被报道为：HRMS (ESI/QTOF): m/z [M + H]<sup>+</sup> Calcd for C<sub>6</sub>H<sub>7</sub>, 79.0542; Found 79.0569.
 
 > The reported molecular formulas and Calcd values should include any added atoms (usually H or Na). For example, HRMS (ESI/QTOF) m/z: [M + Na]+ Calcd for C13H17NO3Na, 258.1101; Found 258.1074.  ---- Journal of Organic Chemistry Style Guide
 
