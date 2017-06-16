@@ -256,14 +256,14 @@ export class H1Component {
         .map(J => J.toFixed(1))
         .join(', ')
         .value();
-      const rendeDangerJ = this.renderOnCondition(
+      const renderDangerJ = this.renderOnCondition(
         this.willHighlightData && peakObj.warning,
         formattedJ,
         HighlightType.Warning,
         <string>peakObj.errMsg,
       );
       return `${rendeDangerPeak} (${rendeDangerPeakType}, <em>J</em> = \
-      ${rendeDangerJ} Hz, ${peakObj.hydrogenCount}H)`;
+      ${renderDangerJ} Hz, ${peakObj.hydrogenCount}H)`;
     }
   }
 

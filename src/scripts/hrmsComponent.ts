@@ -141,8 +141,8 @@ export class HrmsComponent {
         }
         if (fractionF.length !== requiredDecimal) {
           return this.dangerOnCondition(
-            data, 
-            this.errMsg.decimalErr, 
+            data,
+            this.errMsg.decimalErr,
             String(hrms.foundMass));
         } else if (Number(hrms.foundMass) - Number(hrms.exactMass) > maxFoundError) {
           return this.dangerOnCondition(
