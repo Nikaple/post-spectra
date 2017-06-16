@@ -7,8 +7,7 @@ export class Tooltip {
   private tooltip: HTMLDivElement;
   private static instance: Tooltip;
 
-  private constructor(delay = 50, margin = 10) {
-    this.delay = delay;
+  private constructor(margin = 0) {
     this.margin = margin;
     this.tooltip = document.createElement('div');
     this.init();

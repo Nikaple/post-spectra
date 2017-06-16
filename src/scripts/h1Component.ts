@@ -70,10 +70,7 @@ export class H1Component {
     if (parsedData === null) {
       return null;
     }
-    const peakData = parsedData.peakData;
-    const metadataArr = <Metadata[]>parsedData.metadataArr;
-    const tailArr = parsedData.tailArr;
-    // individual peak data objects
+    const { peakData, metadataArr, tailArr, errorArr } = parsedData;
     const peakDataObjs = map(peakData, peakDatum =>
       map(peakDatum, data => this.parsePeakData(data)),
     ) as H1Data[][];
@@ -84,10 +81,14 @@ export class H1Component {
       return null;
     }
     const fixedPeakDataObj: H1Data[][] = map(peakDataObjs, (peakDatum, index) => {
-      const freq = (metadataArr as Metadata[])[index].freq;
+      let freq = 1;
+      const meta = metadataArr[index];
+      if (meta !== null) {
+        freq = meta.freq;
+      }
       return map(peakDatum, peak => this.fixPeakData(peak, freq));
     });
-    return this.render(metadataArr, fixedPeakDataObj, tailArr);
+    return this.render(metadataArr, fixedPeakDataObj, tailArr, errorArr);
   }
   
   /**
@@ -116,15 +117,17 @@ export class H1Component {
    * @memberof H1Component
    */
   private render(
-    metadataArr: Metadata[],
+    metadataArr: (Metadata|null)[],
     peakDataObjs: H1Data[][],
-    tailArr: string[]): ComponentData {
+    tailArr: string[],
+    errorArr: (string|null)[]): ComponentData {
     const h1RenderObjs:  H1RenderObj[] = [];
     forEach(metadataArr, (meta: Metadata, index) => {
       const obj = {} as H1RenderObj;
-      obj.meta = metadataArr[index];
+      obj.meta = metadataArr[index] as Metadata;
       obj.peak = peakDataObjs[index];
       obj.tail = tailArr[index];
+      obj.metaErr = errorArr[index];
       h1RenderObjs.push(obj);
     });
     const input = this.matchedData as string[];
@@ -161,20 +164,19 @@ export class H1Component {
    * @memberof H1Component
    */
   private renderStrArrays(h1RenderObjs: H1RenderObj[]): string[] {
-    const formattedPeakStrings = map(h1RenderObjs, (obj: H1RenderObj) => {
-      const headStr = `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
+    const output = map(h1RenderObjs, (obj: H1RenderObj) => {
+      const headStr = obj.metaErr !== null
+      ? obj.metaErr : 
+      `<sup>1</sup>H NMR (${obj.meta.freq} MHz, \
       ${solventsInfo[obj.meta.solvent].formattedString}) δ `;
       const peakStr = chain(obj.peak)
         .map(this.stringifyPeakData.bind(this))
         .join(', ')
         .value();
       const tailStr = obj.tail;
-      return headStr + peakStr + tailStr;
-    });
-    const output = map(formattedPeakStrings, (str) => {
       return this.willHighlightData
-        ? `<strong>${str}</strong>`
-        : str;
+        ? `<strong>${headStr + peakStr + tailStr}</strong>`
+        : headStr + peakStr + tailStr;
     });
     return output;
   }

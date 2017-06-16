@@ -108,8 +108,11 @@ export class HrmsComponent {
    * 
    * @memberof HrmsComponent
    */
-  private render(hrmsDataArr: YieldWeightHrms[], hrmsRenderObjs: ParsedData[]): ComponentData {
+  private render(hrmsDataArr: YieldWeightHrms[], hrmsRenderObjs: ParsedData[]): ComponentData|null {
     const input = hrmsDataArr.map(data => data.hrms);
+    if (input.length === 0) {
+      return null;
+    }
     const outputPlain = this.renderStrArrays(hrmsRenderObjs);
     this.willHighlightData = true;
     const outputRich = this.renderStrArrays(hrmsRenderObjs);
@@ -347,18 +350,6 @@ export class HrmsComponent {
       return this.getDangerStr(data, errMsg, replace);
     }
     return data;
-  }
-
-  private renderOnCondition(
-    cond: boolean|undefined,
-    strToRender: string,
-    type: HighlightType,
-    errMsg?: string|undefined,
-  ) : string {
-    if (cond) {
-      return highlightData(strToRender, type, errMsg);
-    }
-    return strToRender;
   }
 
   public static get getInstance(): HrmsComponent {

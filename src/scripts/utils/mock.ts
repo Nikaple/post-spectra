@@ -33,7 +33,7 @@ const mockH1Peak = [
 
 export const mockH1Data = mockH1Peak
   .map(data => `${sample(mockH1Head)}${data}${mockDataTail}`)
-  .join('n');
+  .join('\n');
 
 const mockC13Head = [
   '13C NMR (100 MHz, cdcl3) δ ',
@@ -67,7 +67,7 @@ export const mockC13Data = mockC13Head
 .map((head) => {
   return `${head}${sampleSize(mockC13Peak, 20).join(', ')}${mockDataTail}`;
 })
-.join('n');
+.join('\n');
 
 export const mockMassData = {
   formula: 'C8H16O5BrCl2S2',

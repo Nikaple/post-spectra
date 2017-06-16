@@ -1,4 +1,5 @@
-import { map, head, tail, split, some, includes, trimEnd, chain, last, initial } from 'lodash';
+import { map, head, tail, split, some, includes,
+  replace, trimEnd, chain, last, initial } from 'lodash';
 import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
 import { highlightData } from './utils';
@@ -62,12 +63,14 @@ export interface H1RenderObj {
   meta: Metadata;
   peak: H1Data[];
   tail: string;
+  metaErr: string|null;
 }
 
 interface ParsedData {
   peakData: string[][];
   metadataArr: (Metadata|null)[];
   tailArr: string[];
+  errorArr: (string|null)[];
 }
 
 export interface C13RenderObj {
@@ -141,13 +144,18 @@ export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): Pa
   const tailArr = parseTailData(rawTailArr, isStrict);
   const describerArr: string[] = getDescriberArray(splittedDataArray);
   const metadataArr: (Metadata|null)[] = parseMetadata(describerArr, isStrict);
-  if (some(metadataArr, metadata => isMetadataError(metadata, type))) {
-    thisArg.renderError(thisArg.errMsg.infoErr);
-    return null;
-  }
+  const errorArr: (string|null)[] = getErrorArray(thisArg, metadataArr, describerArr);
+  // if (some(metadataArr, metadata => isSolventError(metadata))) {
+  //   thisArg.renderError(thisArg.errMsg.infoErr);
+  //   return null;
+  // }
+  // if (some(metadataArr, metadata => isFrequencyError(metadata, type))) {
+  //   thisArg.renderError(thisArg.errMsg.infoErr);
+  //   return null;
+  // }
   const rawPeakData = map(splittedDataArray, initial);
   const peakData: string[][] = getPeakDataArray(rawPeakData);
-  return { peakData, metadataArr, tailArr };
+  return { peakData, metadataArr, tailArr, errorArr };
 }
 
 /**
@@ -300,21 +308,54 @@ function parseTailData(tailArr: string[], isStrict: boolean): string[] {
   });
 }
 
+function getErrorArray(thisArg: any, metadataArr: (Metadata|null)[], describerArr: string[]) {
+  return map(metadataArr, (metadata, index) => {
+    let replacement = describerArr[index];
+    if (!metadata) {
+      return highlightData(replacement, HighlightType.Danger, thisArg.errMsg.infoErr);
+    }
+    if (isSolventError(metadata)) {
+      replacement = getDangerStr(replacement, '溶剂信息错误', metadata.solvent);
+    } else if (isFrequencyError(metadata)) {
+      replacement = getDangerStr(replacement, '频率信息错误', String(metadata.freq));
+    } else {
+      return null;
+    }
+    return replacement;
+  });
+}
 /**
- * check the validity of metadata
+ * check the validity of frequency
  * 
- * @export
  * @param {(Metadata|null)} meta 
  * @param {Nucleo} type 
  * @returns {boolean} 
  */
-function isMetadataError(meta: Metadata|null, type: Nucleo): boolean {
+function isFrequencyError(meta: Metadata|null): boolean {
   if (!meta) {
     return true;
   }
-  // decrease the frequency to 1/4 when calculating 13C NMR
-  const decay = type === 'H' ? 1 : 4;
-  return meta.freq < minFreq / decay
-    || meta.freq > maxFreq / decay
-    || !solventsInfo[meta.solvent];
+  const decay = meta.type === 'H' ? 1 : 4;
+  return meta.freq < minFreq / decay || meta.freq > maxFreq / decay;
+}
+
+/**
+ * check the validity of solvent
+ * 
+ * @param {(Metadata|null)} meta 
+ * @returns {boolean} 
+ */
+function isSolventError(meta: Metadata|null): boolean {
+  if (!meta) {
+    return true;
+  }
+  return !solventsInfo[meta.solvent];
+}
+
+function getDangerStr(data: string, errMsg: string, strToReplace?: string): string {
+  if (strToReplace === undefined) {
+    return highlightData(data, HighlightType.Danger, errMsg);
+  }
+  const replacement = highlightData(strToReplace, HighlightType.Danger, errMsg);
+  return replace(data, strToReplace, replacement);
 }
