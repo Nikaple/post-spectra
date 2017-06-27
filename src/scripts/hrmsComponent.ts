@@ -10,7 +10,7 @@ interface HrmsData {
   data: string; // original data
   source: string; // HRMS source, ESI/APCI...
   ion: string; // counter ion, H/Na...
-  formula: ElementCountPair[]; // formula object
+  formula: string; // formula object
   exactMass: string; // input exact mass
   foundMass: string; // input found mass
   calcdMass: number; // calculated by program
@@ -131,7 +131,7 @@ export class HrmsComponent {
       }
       const [, fractionE] = hrms.exactMass.split('.');
       const [, fractionF] = hrms.foundMass.split('.');
-      const { data } = hrms;
+      const { data, formula } = hrms;
       if (this.isStrict) {
         if (fractionE.length !== requiredDecimal) {
           return this.dangerOnCondition(
@@ -161,9 +161,11 @@ export class HrmsComponent {
           `${this.errMsg.calcErr}${hrms.calcdMass.toFixed(4)}`,
           String(hrms.exactMass));
       }
+      const mergedData = replace(data, formula, new Formula(formula).toString());
+      const formattedData = replace(data, formula, new Formula(formula).toFormattedString());
       const validData = this.willHighlightData
-        ? `<b>${highlightData(data, HighlightType.Success)}</b>`
-        : data;
+        ? `<b>${highlightData(formattedData, HighlightType.Success)}</b>`
+        : mergedData;
       return validData;
     });
     return dataStringArr;
@@ -269,17 +271,17 @@ export class HrmsComponent {
     }
 
     // handle data
-    let rawFormula = '';
+    let formula = '';
     let exactMass = '';
     let foundMass = '';
     if (dataMatch === null) {
       return this.getDangerStr(hrmsData, this.errMsg.dataErr);
     } else {
       const tempArr = [];
-      rawFormula = dataMatch[1];
+      formula = dataMatch[1];
       exactMass = dataMatch[3];
       foundMass = dataMatch[4];
-      tempArr.push(rawFormula, exactMass, foundMass);
+      tempArr.push(formula, exactMass, foundMass);
       for (let i = 0; i < tempArr.length; i += 1) {
         if (!tempArr[i]) {
           return this.getDangerStr(
@@ -288,17 +290,16 @@ export class HrmsComponent {
             String(tempArr[i]));
         }
       }
-      if (!rawFormula) {
-        return this.getDangerStr(hrmsData, this.errMsg.dataErr, rawFormula);
+      if (!formula) {
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr, formula);
       } else {
-        if (!new Formula(rawFormula).isValid()) {
-          return this.getDangerStr(hrmsData, this.errMsg.dataErr, rawFormula);
+        if (!new Formula(formula).isValid()) {
+          return this.getDangerStr(hrmsData, this.errMsg.dataErr, formula);
         }
       }
     }
     const data = hrmsData;
-    const formulaObj = new Formula(rawFormula);
-    const formula = formulaObj.parse() as ElementCountPair[];
+    const formulaObj = new Formula(formula);
     // 381.087745 -> 381.08775 -> 381.0878, not 381.0877
     const calcdMass = round(round(formulaObj.getExactMass() + this.getIonMass(ion), 5), 4);
     return {

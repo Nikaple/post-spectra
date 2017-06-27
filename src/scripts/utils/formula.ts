@@ -53,14 +53,53 @@ export class Formula {
   }
 
   /**
-   * get formula in JSON type
+   * return the formula of merged elements
    * 
    * @returns {string} 
    * 
    * @memberof Formula
    */
   public toString(): string {
-    return JSON.stringify(this.parse());
+    const formulaObj = this.parse();
+    if (!formulaObj) {
+      return '';
+    }
+    return reduce(
+      formulaObj,
+      (formula: string, elementCountPair: ElementCountPair) => {
+        if (elementCountPair.count === 1) {
+          formula += elementCountPair.element;
+        } else {
+          formula += `${elementCountPair.element}${elementCountPair.count}`;
+        }
+        return formula;
+      },
+      '');
+  }
+
+  /**
+   * return the formatted formula of merged elements
+   * 
+   * @returns {string} 
+   * 
+   * @memberof Formula
+   */
+  public toFormattedString(): string {
+    const formulaObj = this.parse();
+    if (!formulaObj) {
+      return '';
+    }
+    return reduce(
+      formulaObj,
+      (formula: string, elementCountPair: ElementCountPair) => {
+        if (elementCountPair.count === 1) {
+          formula += elementCountPair.element;
+        } else {
+          formula += `${elementCountPair.element}<sub>${elementCountPair.count}</sub>`;
+        }
+        return formula;
+      },
+      '');
   }
 
   public isValid(): boolean {

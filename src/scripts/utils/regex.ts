@@ -19,7 +19,7 @@ const h1RegStrict = h1Reg;
 // match c13data
 const c13Head = '13C NMR.+?';
 const c13MHz = 'MHz.+?';
-const c13Optional = '(\\(\\d*C?\\))?';
+const c13Optional = ' ?(\\(\\d*C?\\))?';
 
 const c13Reg = new RegExp(
 `${c13Head}${c13MHz}${peak}${c13Optional}${dataTail}${negative}`, 'g');
