@@ -34,12 +34,12 @@
             padding-top: 1rem;
             padding-bottom: 1.5rem;
             @include screen-tiny {
-                font-size: 1.8rem;
+                font-size: 2rem;
                 padding-top: 2rem;
                 line-height: 3rem;
             }
             @include screen-small {
-                font-size: 1.8rem;
+                font-size: 2.2rem;
             }
         }
         .checkbox-wrapper {

@@ -1,10 +1,12 @@
-# Chemical Supporting Information Helper
+# Post Spectra
 
 ## [在线预览](https://nikaple.github.io/) （暂不兼容`IE`浏览器）
 
 ## 太长不看
 
-### 本程序能接收两种数据：原始数据——用于格式化，或已处理的数据——用于检测。
+ 本程序能接收两种数据：
+ - 原始数据——用于格式化；
+ - 已处理的数据——用于检测。
 
 ## 基本使用
 
