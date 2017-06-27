@@ -8,6 +8,7 @@
         "noImplicitThis": true,
         "strictNullChecks": true,
         "moduleResolution": "node",
+        "types": ["lodash"],
         "typeRoots": [
             "node_modules/@types"
         ],
