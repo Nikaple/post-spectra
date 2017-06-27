@@ -10,7 +10,3 @@ import '../styles/base.scss';
 
 import { AppComponent } from './appComponent';
 AppComponent.getInstance;
-
-import { Formula } from './utils/formula';
-const formula = new Formula('CH3CHO');
-console.log(formula.toString());
