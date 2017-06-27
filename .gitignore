@@ -5,3 +5,4 @@ npm-debug.log*
 TODO
 typings
 .vscode
+.DS_STORE
