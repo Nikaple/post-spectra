@@ -1,6 +1,6 @@
 {
     "name": "post-spectra",
-    "version": "0.9.3",
+    "version": "1.0.0",
     "description": "Formatting/Validating NMR/HRMS spectra data",
     "main": "dist/index.html",
     "scripts": {

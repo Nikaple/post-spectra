@@ -1,12 +1,13 @@
 import { pullAll, forEach, compact, replace, chain,
   includes, round, escapeRegExp, escape } from 'lodash';
-import { ComponentData } from './utils/constants';
+import { ComponentData, descriptions } from './utils/constants';
 import { Tooltip } from './utils/tooltip';
 import { H1Component } from './h1Component';
 import { C13Component } from './c13Component';
 import { HrmsComponent } from './hrmsComponent';
 import { highlightData, clearDOMElement, copyFormattedStrToClipboard } from './utils/utils';
 import { HighlightType } from './utils/nmr';
+import { LanguageService, Languages } from './utils/language';
 
 
 export class AppComponent {
@@ -41,15 +42,20 @@ export class AppComponent {
   }
 
   private init() {
-    // create all instances
+    // create tools
+    LanguageService.getInstance;
     Tooltip.getInstance;
+    this.attachEvents();
+
+    // create components
     H1Component.getInstance;
     C13Component.getInstance;
     HrmsComponent.getInstance;
     
-    this.attachEvents();
     // handle changes
     this.handle();
+
+
   }
 
   
@@ -137,6 +143,7 @@ export class AppComponent {
   private attachEvents() {
     this.onTextChange();
     this.onScrollSync();
+    this.onLanguageChange();
   }
 
   /**
@@ -148,6 +155,7 @@ export class AppComponent {
    */
   private onTextChange() {
     // bind event listeners
+    const $languageTrigger = document.querySelector('.language') as HTMLDivElement;
     const $checkboxes = Array.from(document.querySelectorAll('div.checkbox-wrapper input'));
     const $peaks = document.querySelector('#input') as HTMLTextAreaElement;
     forEach([$peaks, ...$checkboxes], (el) => {
@@ -192,6 +200,40 @@ export class AppComponent {
     $inputScrollbarHolder.addEventListener('scroll', inputScroll);
     $outputScrollbarHolder.addEventListener('scroll', outputScroll);
   }
+
+  /**
+   * event fired when language changes
+   * 
+   * @private
+   * @memberof AppComponent
+   */
+  private onLanguageChange() {
+    const $help = document.querySelector('.fork-me') as HTMLAnchorElement;
+    const $languageTrigger = document.querySelector('.language') as HTMLDivElement;
+    const $labels = Array.from(document.querySelectorAll('.radio-text'));
+    const changeLanguage = function (e: Event) {
+      e.preventDefault();
+      LanguageService.getInstance.switchLanguage();
+      const currentLanguage = LanguageService.getInstance.getLanguage();
+      $help.title = descriptions.ribbons[0][currentLanguage];
+      $languageTrigger.title = descriptions.ribbons[1][currentLanguage];
+      forEach($labels, ($label, index) => {
+        $label.innerHTML = descriptions.configs[index][currentLanguage];
+      });
+    };
+    let $clicked: EventTarget;
+    document.body.addEventListener('mousedown', (e) => {
+      $clicked = e.target;
+    });
+    $languageTrigger.addEventListener('mouseup', (e) => {
+      if (e.target !== $clicked) {
+        return;
+      }
+      changeLanguage(e);
+      this.handle();
+    });
+  }
+  
   /**
    * Creates an unique instance of AppComponent
    * 

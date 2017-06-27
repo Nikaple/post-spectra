@@ -5,6 +5,7 @@ import { HighlightType } from './utils/nmr';
 import { Formula, ElementCountPair } from './utils/formula';
 import { elementLookup, Element } from './utils/element';
 import { hrmsRegex } from './utils/regex';
+import { LanguageService } from './utils/language';
 
 interface HrmsData {
   data: string; // original data
@@ -37,11 +38,11 @@ export class HrmsComponent {
   private willHighlightData: boolean;
   // error message
   private errMsg: {
-    dataErr: string;
-    formatErr: string;
-    decimalErr: string;
-    calcErr: string;
-    foundErr: string;
+    dataErr: string[];
+    formatErr: string[];
+    decimalErr: string[];
+    calcErr: string[];
+    foundErr: string[];
   };
   private domElements: {
     $strict: HTMLInputElement;
@@ -59,11 +60,11 @@ export class HrmsComponent {
       $strict: document.querySelector('#strict') as HTMLInputElement,
     };
     this.errMsg = {
-      dataErr: '数据有误',
-      formatErr: '格式有误',
-      decimalErr: '应保留4位小数',
-      calcErr: '数据错误，计算值：',
-      foundErr: '偏差值应小于0.003',
+      dataErr: ['HRMS Data not valid.', '数据有误'],
+      formatErr: ['Format not valid.', '格式有误'],
+      decimalErr: ['Mass value should be rounded to two decimal places', '应保留4位小数'],
+      calcErr: ['Data error, calculated value: ', '数据错误，计算值：'],
+      foundErr: ['Deviation should be less than 0.003', '偏差值应小于0.003'],
     };
   }
 
@@ -122,6 +123,7 @@ export class HrmsComponent {
   private renderStrArrays(hrmsRenderObjs: ParsedData[]) {
     const requiredDecimal = 4;
     const maxFoundError = 0.003;
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     const dataStringArr = map(hrmsRenderObjs, (hrmsRenderObj) => {
       const { yield_, weight, hrms } = hrmsRenderObj;
       if (typeof hrms === 'string') {
@@ -136,18 +138,18 @@ export class HrmsComponent {
         if (fractionE.length !== requiredDecimal) {
           return this.dangerOnCondition(
             data, 
-            this.errMsg.decimalErr, 
+            this.errMsg.decimalErr[currentLanguage],
             hrms.exactMass);
         }
         if (fractionF.length !== requiredDecimal) {
           return this.dangerOnCondition(
             data,
-            this.errMsg.decimalErr,
+            this.errMsg.decimalErr[currentLanguage],
             String(hrms.foundMass));
         } else if (Number(hrms.foundMass) - Number(hrms.exactMass) > maxFoundError) {
           return this.dangerOnCondition(
             data,
-            this.errMsg.foundErr,
+            this.errMsg.foundErr[currentLanguage],
             String(hrms.foundMass),
           );
         }
@@ -181,6 +183,7 @@ export class HrmsComponent {
    */
   private getHrmsDataArray(): (YieldWeightHrms|null)[]|null {
     const compoundDataArray = this.inputtedData.split(/\n/g);
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     if (compoundDataArray[0] === ''  && compoundDataArray.length === 1) {
       return null;
     }
@@ -192,17 +195,17 @@ export class HrmsComponent {
       let errMsg = '';
       let hrms = '';
       if (!hrmsMatch) {
-        errMsg = this.getDangerStr(data, this.errMsg.formatErr);
+        errMsg = this.getDangerStr(data, this.errMsg.formatErr[currentLanguage]);
         return null;
       } else {
         hrms = hrmsMatch[0];
       }
       if (this.isStrict) {
         if (yieldMatch[2] !== undefined && yieldMatch[2] !== '') {
-          errMsg = this.getDangerStr(data, this.errMsg.formatErr, yieldMatch[2]);
+          errMsg = this.getDangerStr(data, this.errMsg.formatErr[currentLanguage], yieldMatch[2]);
         }
         if (weightMatch[2] !== undefined && weightMatch[2] !== ' ') {
-          errMsg = this.getDangerStr(data, this.errMsg.formatErr, weightMatch[2]);
+          errMsg = this.getDangerStr(data, this.errMsg.formatErr[currentLanguage], weightMatch[2]);
         }
       }
       return {
@@ -232,18 +235,18 @@ export class HrmsComponent {
     const ionMatch = hrmsData.match(ionReg);
     const ionList = ['', 'H', 'Na', 'K', 'Cs'];
     const dataMatch = hrmsData.match(dataReg);
-
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     // handle source match
     let source = '';
     if (sourceMatch === null) {
-      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage]);
     } else {
       source = sourceMatch[1];
       const isContained = some(sourceList, (availableSource) => {
         return includes(source, availableSource);
       });
       if (!isContained) {
-        return this.getDangerStr(hrmsData, this.errMsg.dataErr, source);
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage], source);
       }
     }
 
@@ -251,22 +254,22 @@ export class HrmsComponent {
     let ionPlusSign = '';
     let ion = '';
     if (ionMatch === null) {
-      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage]);
     } else {
       ionPlusSign = ionMatch[1] || ionMatch[3];
       ion = ionMatch[2] || ionMatch[4];
       // match [M]+
       if (ion === '') {
         if (ionPlusSign !== '') {
-          return this.getDangerStr(hrmsData, this.errMsg.dataErr, ionMatch[0]);
+          return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage], ionMatch[0]);
         }
       } else if (includes(ionList, ion)) {
         // match [M + H]+
         if (this.isStrict && ionPlusSign !== ' + ') {
-          return this.getDangerStr(hrmsData, this.errMsg.formatErr, ionMatch[0]);
+          return this.getDangerStr(hrmsData, this.errMsg.formatErr[currentLanguage], ionMatch[0]);
         }
       } else { 
-        return this.getDangerStr(hrmsData, this.errMsg.dataErr, ionMatch[0]);
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage], ionMatch[0]);
       }
     }
 
@@ -275,7 +278,7 @@ export class HrmsComponent {
     let exactMass = '';
     let foundMass = '';
     if (dataMatch === null) {
-      return this.getDangerStr(hrmsData, this.errMsg.dataErr);
+      return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage]);
     } else {
       const tempArr = [];
       formula = dataMatch[1];
@@ -286,15 +289,15 @@ export class HrmsComponent {
         if (!tempArr[i]) {
           return this.getDangerStr(
             hrmsData,
-            this.errMsg.dataErr,
+            this.errMsg.dataErr[currentLanguage],
             String(tempArr[i]));
         }
       }
       if (!formula) {
-        return this.getDangerStr(hrmsData, this.errMsg.dataErr, formula);
+        return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage], formula);
       } else {
         if (!new Formula(formula).isValid()) {
-          return this.getDangerStr(hrmsData, this.errMsg.dataErr, formula);
+          return this.getDangerStr(hrmsData, this.errMsg.dataErr[currentLanguage], formula);
         }
       }
     }

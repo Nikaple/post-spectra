@@ -22,6 +22,20 @@
             display: none;
         }
     }
+    .language {
+        top: -0.8rem;
+        right: -2.7rem;
+        height: 8rem;
+        width: 11rem;
+        border: 0;
+        cursor: pointer;
+        &:before {
+            background-color: #333;
+        }
+        @include screen-tiny {
+            display: none;
+        }
+    }
     .header-wrapper {
         width: 100%;
         position: absolute;

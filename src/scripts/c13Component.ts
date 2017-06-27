@@ -3,6 +3,7 @@ import { chain, map, split, clone, remove, forEach,
 import { ComponentData, solventsInfo } from './utils/constants';
 import { handleNMRData, C13Data, Metadata, C13RenderObj, HighlightType } from './utils/nmr';
 import { highlightData, clearDOMElement } from './utils/utils';
+import { LanguageService } from './utils/language';
 
 export class C13Component {
   // data from input
@@ -13,10 +14,12 @@ export class C13Component {
   private willHighlightData: boolean;
   // error message
   private errMsg: {
-    dataErr: string;
-    infoErr: string;
-    peakErr: string;
+    dataErr: string[];
+    infoErr: string[];
+    peakErr: string[];
   };
+  // tooltip error message
+  private tooltipErrors: (string[]|string[][])[];
   private domElements: {
     $strict: HTMLInputElement;
     $error: HTMLDivElement;
@@ -30,10 +33,19 @@ export class C13Component {
     this.inputtedData = '';
     this.willHighlightData = false;
     this.errMsg = {
-      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
-      infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
-      peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
+      dataErr: ['Data not valid! Please copy data straightly from peak analysis programs.',
+        '谱图数据格式不正确！请直接从MestReNova中粘贴'],
+      infoErr: ['Frequency/solvent not valid! Please copy data straightly \
+      from peak analysis programs.',
+        '频率或溶剂信息有误！请直接从MestReNova中粘贴'],
+      peakErr: ['Peak data not valid! Please copy data straightly from peak analysis programs.',
+        '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>'],
     };
+    this.tooltipErrors = [
+      [' peaks have been automatically removed: ', '个峰已被自动移除：'],
+      [['But', '但'], [' is ', '是'], ['.', '。']],
+      ['Data not valid.', '数据有误'],
+    ];
     this.domElements = {
       $error: document.querySelector('#error') as HTMLDivElement,
       $strict: document.querySelector('#strict') as HTMLInputElement,
@@ -115,6 +127,7 @@ export class C13Component {
   }
 
   private renderStrArrays(c13RenderObjs: C13RenderObj[], deletedPeaks: C13Data[][]) {
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     const formattedPeakStrings = map(c13RenderObjs, (obj: C13RenderObj, index) => {
       const currentSolventInfo = solventsInfo[obj.meta.solvent];
       const headStr = `<sup>13</sup>C NMR (${obj.meta.freq} MHz, \
@@ -126,14 +139,17 @@ export class C13Component {
       let type: HighlightType;
       let errMsg = '';
       if (deletedPeaks[index].length !== 0) {
-        errMsg = `自动移除的${deletedPeaks[index].length}个峰：\
+        errMsg = `${deletedPeaks[index].length}${this.tooltipErrors[0][currentLanguage]}\
         ${join(deletedPeaks[index], ', ')}。`;
       } else {
         return highlightedData;
       }
       if (deletedPeaks[index].length > currentSolventInfo.peaks) {
         type = HighlightType.Danger;
-        errMsg += `<br>而${currentSolventInfo.formattedString}是${currentSolventInfo.peaks}重峰`;
+        errMsg += `<br>${this.tooltipErrors[1][0][currentLanguage]}\
+        ${currentSolventInfo.formattedString}\
+        ${this.tooltipErrors[1][1][currentLanguage]}${currentSolventInfo.peakType[currentLanguage]}\
+        ${this.tooltipErrors[1][2][currentLanguage]}`;
       } else {
         type = HighlightType.Warning;
       }
@@ -186,18 +202,20 @@ export class C13Component {
   }
 
   private fixPeaks(peak: C13Data, index: number, data: C13Data[]): C13Data {
+    const currentLanguage = LanguageService.getInstance.getLanguage();
+    const errorMsg = this.tooltipErrors[2][currentLanguage] as string;
     if (peak === null) {
-      return highlightData('数据有误', HighlightType.Danger);
+      return highlightData(errorMsg, HighlightType.Danger);
     }
     // for peaks like '5.2(0) and 13.1(4C)'
     const peakExecArr = /(\d+\.\d*)(\(\d+C?\))?$/.exec(peak) as RegExpExecArray;
     if (!peakExecArr) {
-      return highlightData(peak, HighlightType.Danger, '数据有误');
+      return highlightData(peak, HighlightType.Danger, errorMsg);
     }
     const peakStr = peakExecArr[1];
     const peakInfo = peakExecArr[2] || '';
     if (isNaN(Number(peakStr))) {
-      return highlightData(peakStr, HighlightType.Danger, '数据有误');
+      return highlightData(peakStr, HighlightType.Danger, errorMsg);
     }
     const peakNumber = Number(peakStr);
     const peakWith1Decimal: C13Data = peakNumber.toFixed(1);

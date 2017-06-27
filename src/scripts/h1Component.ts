@@ -7,12 +7,11 @@ import { highlightData, escapeSpace, clearDOMElement } from './utils/utils';
 import { nmrRegex } from './utils/regex';
 import { some, split, map, forEach, clone, every, replace, slice, join, chain,
   endsWith, compact, includes } from 'lodash';
-
+import { LanguageService, Languages } from './utils/language';
 
 const peakRangePlaceholder = 'PEAKRANGE';
 
 export class H1Component {
-
   // data from input
   private inputtedData: string;
   // data that match '1H NMR: ....'
@@ -21,10 +20,12 @@ export class H1Component {
   private willHighlightData: boolean;
   // error message
   private errMsg: {
-    dataErr: string;
-    infoErr: string;
-    peakErr: string;
+    dataErr: string[];
+    infoErr: string[];
+    peakErr: string[];
   };
+  // tooltip error messages
+  private tooltipErrors: (string[]|string[][])[];
   private domElements: {
     $general: HTMLInputElement;
     $autoFixJ: HTMLInputElement;
@@ -44,10 +45,29 @@ export class H1Component {
     this.inputtedData = '';
     this.willHighlightData = false;
     this.errMsg = {
-      dataErr: '谱图数据格式不正确！请直接从MestReNova中粘贴',
-      infoErr: '频率或溶剂信息有误！请直接从MestReNova中粘贴',
-      peakErr: '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>',
+      dataErr: ['Data not valid! Please copy data straightly from peak analysis programs.',
+        '谱图数据格式不正确！请直接从MestReNova中粘贴'],
+      infoErr: ['Frequency/solvent not valid! Please copy data straightly \
+      from peak analysis programs.',
+        '频率或溶剂信息有误！请直接从MestReNova中粘贴'],
+      peakErr: ['Peak data not valid! Please copy data straightly from peak analysis programs.',
+        '谱峰数据不正确！请直接从MestReNova中粘贴！错误的内容已用红色标出: <br>'],
     };
+    this.tooltipErrors = [
+      [[' only', '只'], [' peak should', '峰应'], [' have ', '有'], [' coupling constant', '个耦合常数']],
+      ['Invalid format.', '格式有误'],
+      ['Chemical shift of multiplet should be written from low field to high field.',
+        '多重峰化学位移区间应由低场向高场书写'],
+      [' peak type does not exists.', '峰类型不存在'],
+      ['Multiplet peaks should be reported in interval', '多重峰化学位移应为区间形式'],
+      ['Do not report coupling constants in multiplet peaks', '多重峰不存在耦合常数'],
+      [' peak should have only one chemical shift', '峰化学位移应为单值'],
+      [' peak do not have coupling constants', '峰不存在耦合常数'],
+      [' peak should have coupling constants', '峰应有耦合常数'],
+      ['Original data: ', '原始数据：'],
+      [' peak has been marked as multiplets, please report the spectrum data manually', 
+        '峰已被标注为多重峰，请从MestReNova中手动输入化学位移数据'],
+    ];
     this.domElements = {
       $general: document.querySelector('#generalMultiplet') as HTMLInputElement,
       $autoFixJ: document.querySelector('#autoFixJ') as HTMLInputElement,
@@ -298,6 +318,7 @@ export class H1Component {
     const regexWithoutCoupling = nmrRegex.h1PeakWithoutJs[Number(this.isStrict)];
     const couplingMatch = data.match(regexWithCoupling);
     const nonCouplingMatch = data.match(regexWithoutCoupling);
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     if (couplingMatch) {
       // tslint:disable-next-line:variable-name
       const Js = chain(couplingMatch)
@@ -311,8 +332,11 @@ export class H1Component {
       // tslint:disable-next-line:variable-name
       const JNumber = JCount[peakType];
       if (Js.length !== JNumber) {
-        const zhi = JNumber === 1 ? '只' : '';
-        errMsg = `${peakType}峰应${zhi}有${JCount[peakType]}个耦合常数`;
+        // [['only', '只'], ['peak should'], ['have', '有'], ['coupling constant', '个耦合常数']],
+        const zhi = JNumber === 1 ? this.tooltipErrors[0][0][currentLanguage] : '';
+        const end = currentLanguage === Languages.Chinese ? (JNumber === 1 ? '.' : 's.') : '。';
+        // tslint:disable-next-line:max-line-length
+        errMsg = `${peakType}${this.tooltipErrors[0][1][currentLanguage]}${zhi}${this.tooltipErrors[0][2][currentLanguage]}${JCount[peakType]}${this.tooltipErrors[0][3][currentLanguage]}${end}`;
         peakTypeError = true;
       }
       return {
@@ -332,10 +356,18 @@ export class H1Component {
       let peak;
       if (!includes(validEnding, nonCouplingMatch[0].substr(-1))) {
         data = includes(data, ')') ? data : data + ')';
-        return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
+        return highlightData(
+          `${escapeSpace(data)}`, 
+          HighlightType.Danger, 
+          this.tooltipErrors[1][currentLanguage] as string,
+        );
       }
       if (this.isStrict && !includes(validHyphen, hyphen[0]) && hyphen[0] !== '') {
-        peak = highlightData(nonCouplingMatch[1], HighlightType.Danger, '格式有误'); 
+        peak = highlightData(
+          nonCouplingMatch[1], 
+          HighlightType.Danger, 
+          this.tooltipErrors[1][currentLanguage] as string,
+        ); 
         return {
           peak,
           peakType: nonCouplingMatch[3] as Multiplet,
@@ -345,7 +377,7 @@ export class H1Component {
       } else {
         peak = peakArr.length === 1 ? peakArr[0] : peakArr;
         const danger = Number(peakArr[0]) < Number(peakArr[1]) ? true : false;
-        const errMsg = danger ? '多重峰化学位移区间应由低场向高场书写' : '';
+        const errMsg = danger ? this.tooltipErrors[2][currentLanguage] as string : '';
         return {
           peak,
           danger,
@@ -358,7 +390,11 @@ export class H1Component {
     } else {
       data = includes(data, ')') ? data : data + ')';
       // escape space here.
-      return highlightData(`${escapeSpace(data)}`, HighlightType.Danger, '格式有误');
+      return highlightData(
+        `${escapeSpace(data)}`, 
+        HighlightType.Danger, 
+        this.tooltipErrors[1][currentLanguage] as string,
+      );
     }
   }
 
@@ -378,32 +414,35 @@ export class H1Component {
     }
     const isGeneral = !this.domElements.$general.checked;
     const willFixJ = this.domElements.$autoFixJ.checked;
+    const currentLanguage = LanguageService.getInstance.getLanguage();
     const peakDatumCopy = clone(peakDatum);
     if (!isPeak(peakDatumCopy.peakType)) {
       peakDatumCopy.peakTypeError = true;
-      peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰类型不存在`; 
+      peakDatumCopy.errMsg = `${peakDatumCopy.peakType}${this.tooltipErrors[3][currentLanguage]}`; 
     } else {
       if (isMultiplePeak(peakDatumCopy.peakType)) {
         // peak type 'm' should have an range of peak
         if (typeof peakDatumCopy.peak === 'string') {
           peakDatumCopy.danger = true;
-          peakDatumCopy.errMsg = '多重峰化学位移应为区间形式';
+          peakDatumCopy.errMsg = this.tooltipErrors[4][currentLanguage] as string;
         }
         if (peakDatumCopy.Js !== null) {
           // single peaks shouldn't have coupling constants
           peakDatumCopy.warning = true;
-          peakDatumCopy.errMsg = `多重峰不存在耦合常数`;
+          peakDatumCopy.errMsg = this.tooltipErrors[5][currentLanguage] as string;
         }
       } else { // all peak types except 'm' should only have one peak value
         if (typeof peakDatumCopy.peak !== 'string') {
           peakDatumCopy.danger = true;
-          peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰化学位移应为单值`;
+          peakDatumCopy.errMsg = 
+          `${peakDatumCopy.peakType}${this.tooltipErrors[6][currentLanguage]}`;
         }
         if (isSinglePeak(peakDatumCopy.peakType)) {
           if (peakDatumCopy.Js !== null) {
             // single peaks shouldn't have coupling constants
             peakDatumCopy.peakTypeError = true;
-            peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰不存在耦合常数`;
+            peakDatumCopy.errMsg = 
+            `${peakDatumCopy.peakType}${this.tooltipErrors[7][currentLanguage]}`;
           }
         } else {
           if (isMultiplePeakWithJ(peakDatumCopy.peakType, isGeneral)) {
@@ -412,7 +451,8 @@ export class H1Component {
               if (!peakDatumCopy.Js) {
                 // multiple peaks should have coupling constants
                 peakDatumCopy.peakTypeError = true;
-                peakDatumCopy.errMsg = `${peakDatumCopy.peakType}峰应有耦合常数`;
+                peakDatumCopy.errMsg = 
+                `${peakDatumCopy.peakType}${this.tooltipErrors[8][currentLanguage]}`;
               } else {
                 const isAllJValid = every(peakDatumCopy.Js, J => this.isJValid(J, freq));
                 if (!isAllJValid) {
@@ -423,8 +463,8 @@ export class H1Component {
                     .map(data => data.toFixed(1))
                     .join(', ')
                     .value();
-                  peakDatumCopy.errMsg = `原始数据： <em>J</em> = \
-                  ${originalJsString}`;
+                  peakDatumCopy.errMsg = `${this.tooltipErrors[9][currentLanguage]}<em>J</em> = \
+                  ${originalJsString} Hz`;
                 }
               }
             }
@@ -434,7 +474,7 @@ export class H1Component {
             peakDatumCopy.peakType = 'm';
             peakDatumCopy.peak = peakRangePlaceholder;
             peakDatumCopy.Js = null;
-            peakDatumCopy.errMsg = `已将${peakDatum.peakType}峰标注为多重峰，请从MestReNova中手动输入化学位移数据`;
+            peakDatumCopy.errMsg = `${peakDatum.peakType}${this.tooltipErrors[9][currentLanguage]}`;
           }
         }
       }

@@ -3,10 +3,11 @@ import { map, head, tail, split, some, includes,
 import { minFreq, maxFreq, solventsInfo } from './constants';
 import { nmrRegex } from './regex';
 import { highlightData } from './utils';
+import { LanguageService } from './language';
 
 
 export type Nucleo = 'H'|'C';
-export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dq'|'br'
+export type Multiplet = 's'|'d'|'t'|'q'|'m'|'dd'|'dt'|'td'|'ddd'|'ddt'|'dtd'|'tdd'|'dq'|'br'
   |'br s'|'br d'|'brs'|'brd'|'quint'|'sext'|'hept'|'tq'|'dddd';
 export type C13Data = string|null;
 
@@ -79,7 +80,17 @@ export interface C13RenderObj {
   tail: string;
 }
 
+enum TooltipErrors {
+  format = 0,
+  frequency,
+  solvent,
+}
 
+const tooltipErrors = [
+  ['Format error.', '格式有误'], 
+  ['Frequency not valid.', '频率信息有误'], 
+  ['Solvent not valid.', '溶剂信息有误'],
+];
 /**
  * return if the peak is peak
  * 
@@ -136,7 +147,8 @@ export function isMultiplePeak(peak: Multiplet) {
 export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): ParsedData | null {
   thisArg.matchedData = getDataArray(thisArg.inputtedData, type, isStrict);
   if (thisArg.matchedData === null) {
-    thisArg.renderError(thisArg.errMsg.dataErr);
+    const currentLanguage = LanguageService.getInstance.getLanguage();
+    thisArg.renderError(thisArg.errMsg.dataErr[currentLanguage]);
     return null;
   }
   const splittedDataArray = splitDataArray(thisArg.matchedData, type, isStrict);
@@ -145,14 +157,6 @@ export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): Pa
   const describerArr: string[] = getDescriberArray(splittedDataArray);
   const metadataArr: (Metadata|null)[] = parseMetadata(describerArr, isStrict);
   const errorArr: (string|null)[] = getErrorArray(thisArg, metadataArr, describerArr);
-  // if (some(metadataArr, metadata => isSolventError(metadata))) {
-  //   thisArg.renderError(thisArg.errMsg.infoErr);
-  //   return null;
-  // }
-  // if (some(metadataArr, metadata => isFrequencyError(metadata, type))) {
-  //   thisArg.renderError(thisArg.errMsg.infoErr);
-  //   return null;
-  // }
   const rawPeakData = map(splittedDataArray, initial);
   const peakData: string[][] = getPeakDataArray(rawPeakData);
   return { peakData, metadataArr, tailArr, errorArr };
@@ -300,24 +304,42 @@ function parseMetadata(describerArr: string[], isStrict: boolean): (Metadata|nul
 }
 
 function parseTailData(tailArr: string[], isStrict: boolean): string[] {
+  const currentLanguage = LanguageService.getInstance.getLanguage();
   return map(tailArr, (tail) => {
     if (tail !== '.' && tail !== ';' && isStrict) {
-      return highlightData(tail, HighlightType.Danger, '格式有误');
+      return highlightData(
+        tail, 
+        HighlightType.Danger, 
+        tooltipErrors[TooltipErrors.format][currentLanguage],
+      );
     }
     return tail;
   });
 }
 
 function getErrorArray(thisArg: any, metadataArr: (Metadata|null)[], describerArr: string[]) {
+  const currentLanguage = LanguageService.getInstance.getLanguage();
   return map(metadataArr, (metadata, index) => {
     let replacement = describerArr[index];
     if (!metadata) {
-      return highlightData(replacement, HighlightType.Danger, thisArg.errMsg.infoErr);
+      return highlightData(
+        replacement, 
+        HighlightType.Danger, 
+        thisArg.errMsg.infoErr[currentLanguage],
+      );
     }
     if (isSolventError(metadata)) {
-      replacement = getDangerStr(replacement, '溶剂信息错误', metadata.solvent);
+      replacement = getDangerStr(
+        replacement, 
+        tooltipErrors[TooltipErrors.solvent][currentLanguage], 
+        metadata.solvent,
+      );
     } else if (isFrequencyError(metadata)) {
-      replacement = getDangerStr(replacement, '频率信息错误', String(metadata.freq));
+      replacement = getDangerStr(
+        replacement, 
+        tooltipErrors[TooltipErrors.frequency][currentLanguage], 
+        String(metadata.freq),
+      );
     } else {
       return null;
     }
