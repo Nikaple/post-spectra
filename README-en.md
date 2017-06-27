@@ -14,9 +14,9 @@ This program accepts two kinds of data:
 
 ### Options
 
-#### - Vague multiplets：treat all peaks except br, s, br s, d, t, q as m peaks (complex multiplet).
+#### - Vague multiplets：Treat all peaks except br, s, br s, d, t, q as m peaks (complex multiplet).
 
-#### - Auto fix *J*：automatically round the value of coupling constants (J, mHz) to the multiple of frequency of spectroscopy (MHz). E.g. In a 400 MHz <sup>1</sup>H NMR, J = 7.7 Hz will be rounded to 7.6 Hz (7.6 Hz = 7600 mHz, and 7600 is multiple of 400); In a 600 MHz <sup>1</sup>H NMR, J = 7.7 Hz will be rounded to 7.8 Hz.
+#### - Auto fix *J*：Automatically round the value of coupling constants (J, mHz) to the multiple of frequency of spectroscopy (MHz). E.g. In a 400 MHz <sup>1</sup>H NMR, J = 7.7 Hz will be rounded to 7.6 Hz (7.6 Hz = 7600 mHz, and 7600 is multiple of 400); In a 600 MHz <sup>1</sup>H NMR, J = 7.7 Hz will be rounded to 7.8 Hz.
 
 #### - Strict mode: Format detection is only available under strict mode. (See below for examples)
 
