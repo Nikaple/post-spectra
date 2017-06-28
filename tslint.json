@@ -1,7 +1,6 @@
 {
     "extends": "tslint-config-airbnb",
     "rules": {
-        "no-param-reassign": false,
-        "no-any": true
+        "no-param-reassign": false
     }
 }

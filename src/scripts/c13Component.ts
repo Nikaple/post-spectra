@@ -76,7 +76,7 @@ export class C13Component {
       });
     });
     const fixedPeakData: C13Data[][] = map(peakDataCopy, (peakDatum) => {
-      return map(peakDatum, this.fixPeaks);
+      return map(peakDatum, this.fixPeaks.bind(this));
     });
     return this.render(metadataArr, fixedPeakData, deletedPeaks, tailArr);
   }

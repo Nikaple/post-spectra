@@ -144,7 +144,7 @@ export function isMultiplePeak(peak: Multiplet) {
   return peak === 'm';
 }
 
-export function handleNMRData(thisArg: {}, type: Nucleo, isStrict: boolean): ParsedData | null {
+export function handleNMRData(thisArg: any, type: Nucleo, isStrict: boolean): ParsedData | null {
   thisArg.matchedData = getDataArray(thisArg.inputtedData, type, isStrict);
   if (thisArg.matchedData === null) {
     const currentLanguage = LanguageService.getInstance.getLanguage();
@@ -317,7 +317,7 @@ function parseTailData(tailArr: string[], isStrict: boolean): string[] {
   });
 }
 
-function getErrorArray(thisArg: {}, metadataArr: (Metadata|null)[], describerArr: string[]) {
+function getErrorArray(thisArg: any, metadataArr: (Metadata|null)[], describerArr: string[]) {
   const currentLanguage = LanguageService.getInstance.getLanguage();
   return map(metadataArr, (metadata, index) => {
     let replacement = describerArr[index];
