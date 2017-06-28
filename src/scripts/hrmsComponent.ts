@@ -156,7 +156,7 @@ export class HrmsComponent {
       } else {
         hrms.exactMass = Number(hrms.exactMass).toFixed(4);
       }
-      const errorEdge = this.isStrict ? 0 : 0.0001;
+      const errorEdge = 0.0001;
       if (round(Math.abs(Number(hrms.exactMass) - hrms.calcdMass), 4) > errorEdge) {
         return this.dangerOnCondition(
           data, 
