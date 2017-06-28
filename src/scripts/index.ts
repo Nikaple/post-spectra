@@ -2,7 +2,7 @@ import '../styles/base.scss';
 
 // mock data
 
-// import { mockH1Data, mockC13Data, mockMassData, mockRealData } from './utils/mock';
+// import { mockH1Data, mockC13Data, mockRealData } from './utils/mock';
 // const $input = <HTMLInputElement>document.querySelector('#input');
 // $input.innerHTML = mockH1Data;
 // $input.innerHTML +=  '\n' + mockC13Data;

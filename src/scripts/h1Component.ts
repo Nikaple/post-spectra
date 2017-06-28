@@ -334,7 +334,7 @@ export class H1Component {
       if (Js.length !== JNumber) {
         // [['only', '只'], ['peak should'], ['have', '有'], ['coupling constant', '个耦合常数']],
         const zhi = JNumber === 1 ? this.tooltipErrors[0][0][currentLanguage] : '';
-        const end = currentLanguage === Languages.Chinese ? (JNumber === 1 ? '.' : 's.') : '。';
+        const end = (currentLanguage === Languages.Chinese && JNumber > 1) ? 's' : '';
         // tslint:disable-next-line:max-line-length
         errMsg = `${peakType}${this.tooltipErrors[0][1][currentLanguage]}${zhi}${this.tooltipErrors[0][2][currentLanguage]}${JCount[peakType]}${this.tooltipErrors[0][3][currentLanguage]}${end}`;
         peakTypeError = true;
@@ -455,16 +455,16 @@ export class H1Component {
                 `${peakDatumCopy.peakType}${this.tooltipErrors[8][currentLanguage]}`;
               } else {
                 const isAllJValid = every(peakDatumCopy.Js, J => this.isJValid(J, freq));
-                if (!isAllJValid) {
+                if (!isAllJValid && !peakDatumCopy.peakTypeError) {
                   peakDatumCopy.Js = map(peakDatumCopy.Js, J => this.roundJ(J, freq));
                   peakDatumCopy.warning = true;
                   const originalJsString = 
-                     chain(<number[]>peakDatum.Js)
-                    .map(data => data.toFixed(1))
-                    .join(', ')
-                    .value();
+                    chain(<number[]>peakDatum.Js)
+                  .map(data => data.toFixed(1))
+                  .join(', ')
+                  .value();
                   peakDatumCopy.errMsg = `${this.tooltipErrors[9][currentLanguage]}<em>J</em> = \
-                  ${originalJsString} Hz`;
+                    ${originalJsString} Hz`;
                 }
               }
             }
@@ -474,7 +474,9 @@ export class H1Component {
             peakDatumCopy.peakType = 'm';
             peakDatumCopy.peak = peakRangePlaceholder;
             peakDatumCopy.Js = null;
-            peakDatumCopy.errMsg = `${peakDatum.peakType}${this.tooltipErrors[9][currentLanguage]}`;
+            // tslint:disable-next-line:max-line-length
+            peakDatumCopy.errMsg = `${peakDatum.peakType}\
+            ${this.tooltipErrors[10][currentLanguage]}`;
           }
         }
       }

@@ -146,7 +146,7 @@ export class HrmsComponent {
             data,
             this.errMsg.decimalErr[currentLanguage],
             String(hrms.foundMass));
-        } else if (Number(hrms.foundMass) - Number(hrms.exactMass) > maxFoundError) {
+        } else if (Math.abs(Number(hrms.foundMass) - Number(hrms.exactMass)) > maxFoundError) {
           return this.dangerOnCondition(
             data,
             this.errMsg.foundErr[currentLanguage],
@@ -160,7 +160,7 @@ export class HrmsComponent {
       if (round(Math.abs(Number(hrms.exactMass) - hrms.calcdMass), 4) > errorEdge) {
         return this.dangerOnCondition(
           data, 
-          `${this.errMsg.calcErr}${hrms.calcdMass.toFixed(4)}`,
+          `${this.errMsg.calcErr[currentLanguage]}${hrms.calcdMass.toFixed(4)}`,
           String(hrms.exactMass));
       }
       const mergedData = replace(data, formula, new Formula(formula).toString());
@@ -362,5 +362,4 @@ export class HrmsComponent {
     }
     return HrmsComponent.instance;
   }
-
 }
