@@ -35,7 +35,7 @@ After finished analyzing the spectra in `MestReNova`（记得**定标**）, clic
 ### NMR Data Validation
 
 Paste your formatted data directly to the program, and find your error according to the highlight!
-  - Not even bold: the program did not recognize your data, if you are certain that your data is correct, please open an issue.
+  - Not even bold: the program did not recognize your data, if you are certain that your data is correct, please open an issue [here](https://github.com/Nikaple/post-spectra/issues/new).
   - Green highlight:
     - Under strict mode, the data is determined to be correct.
     - Under unstrict mode, there may be format errors.
