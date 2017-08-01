@@ -95,8 +95,8 @@ Any contribution will be appreciated. To help improve the project, you can clone
 
 After installing [NodeJS](https://nodejs.org) and [Git](https://git-scm.com/), run:
 ```
-git clone https://github.com/Nikaple/chem-si-helper.git
-cd chem-si-helper
+git clone https://github.com/Nikaple/post-spectra.git
+cd post-spectra
 npm install
 npm start
 ```
