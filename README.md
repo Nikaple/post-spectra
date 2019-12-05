@@ -1,5 +1,7 @@
 # Post Spectra
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/Nikaple/post-spectra.svg)](https://greenkeeper.io/)
+
 ## [在线预览](https://nikaple.github.io/) （暂不兼容`IE`浏览器）
 
 ## For an English version of readme, click [here](https://github.com/Nikaple/post-spectra/blob/master/README-en.md).
